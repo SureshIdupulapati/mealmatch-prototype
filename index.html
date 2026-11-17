@@ -1,0 +1,2005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>MealMatch — Campus Food Rescue</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#ECFDF5',
+              100: '#D1FAE5',
+              200: '#A7F3D0',
+              300: '#6EE7B7',
+              400: '#34D399',
+              500: '#10B981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065F46',
+              900: '#064E3B',
+              950: '#022C22',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .fade-enter { animation: fadeIn 0.2s ease-out; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-800 antialiased font-sans min-h-screen flex flex-col items-center justify-start select-none">
+
+  <!-- TOP BAR: Product Brand & View Mode Switcher (PC / Mobile) -->
+  <header class="w-full bg-slate-900/95 backdrop-blur border-b border-slate-800 py-2.5 px-4 sm:px-8 flex items-center justify-between text-white shrink-0 z-50">
+    <div class="flex items-center gap-2.5">
+      <div onclick="navigateTo('home')" class="w-8 h-8 rounded-xl bg-brand-500 flex items-center justify-center text-white shadow-md shadow-brand-500/30 cursor-pointer active:scale-95 transition">
+        <i data-lucide="leaf" class="w-4 h-4"></i>
+      </div>
+      <div>
+        <h1 onclick="navigateTo('home')" class="font-extrabold text-base tracking-tight leading-none cursor-pointer">MealMatch</h1>
+        <p onclick="openCampusModal()" class="text-[10px] text-slate-400 mt-0.5 cursor-pointer hover:text-brand-300 transition flex items-center gap-1">
+          <span id="header-campus-label">UC Berkeley • North Campus</span>
+          <i data-lucide="chevron-down" class="w-2.5 h-2.5"></i>
+        </p>
+      </div>
+    </div>
+
+    <!-- Mode Switcher: Mobile vs PC Desktop -->
+    <div class="flex items-center gap-3">
+      <div class="bg-slate-950 p-1 rounded-xl border border-slate-800 flex items-center gap-1 text-xs font-semibold">
+        <button id="btn-mode-mobile" onclick="setAppMode('mobile')" class="px-3 py-1.5 rounded-lg bg-brand-600 text-white transition flex items-center gap-1.5 shadow-sm">
+          <i data-lucide="smartphone" class="w-3.5 h-3.5"></i>
+          <span>Mobile</span>
+        </button>
+        <button id="btn-mode-pc" onclick="setAppMode('pc')" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center gap-1.5">
+          <i data-lucide="monitor" class="w-3.5 h-3.5"></i>
+          <span>PC Desktop</span>
+        </button>
+      </div>
+
+      <button onclick="openPostModal()" class="hidden sm:flex px-3.5 py-1.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold transition items-center gap-1.5 shadow-md shadow-brand-500/25">
+        <i data-lucide="plus" class="w-4 h-4 stroke-[2.5]"></i>
+        <span>Post Drop</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Notification Toast -->
+  <div id="toast" class="fixed top-14 z-50 transition-all duration-300 opacity-0 pointer-events-none transform -translate-y-4">
+    <div class="bg-slate-900 text-white px-4 py-2.5 rounded-2xl shadow-2xl border border-slate-700 flex items-center gap-2.5 text-xs font-semibold">
+      <div class="w-6 h-6 rounded-full bg-brand-500 flex items-center justify-center text-white">
+        <i data-lucide="check" class="w-3.5 h-3.5 stroke-[3]"></i>
+      </div>
+      <span id="toast-message">Notification</span>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- 1. MOBILE APP MODE (iPhone Simulator Frame on Desktop, Native on Phones)  -->
+  <!-- ========================================================================= -->
+  <div id="mobile-wrapper" class="w-full flex justify-center items-start py-2 sm:py-6 flex-1">
+    
+    <div id="phone-container" class="relative w-full sm:w-[393px] h-[100vh] sm:h-[844px] bg-white sm:rounded-[48px] sm:shadow-2xl sm:border-[9px] sm:border-slate-800 overflow-hidden flex flex-col ring-1 ring-slate-800">
+      
+      <!-- iOS Status Bar & Dynamic Island -->
+      <div class="relative z-50 w-full pt-3 px-7 flex items-center justify-between text-[14px] font-semibold text-slate-900 bg-white/95 backdrop-blur shrink-0 select-none">
+        <span id="ios-time">9:41</span>
+        
+        <div class="hidden sm:flex absolute left-1/2 -translate-x-1/2 top-2.5 w-28 h-7 bg-black rounded-full items-center justify-end px-2.5 gap-2">
+          <div class="w-2.5 h-2.5 rounded-full bg-slate-800 border border-slate-700"></div>
+          <div class="w-2 h-2 rounded-full bg-slate-900"></div>
+        </div>
+
+        <div class="flex items-center gap-1.5 text-slate-900">
+          <i data-lucide="signal" class="w-3.5 h-3.5"></i>
+          <i data-lucide="wifi" class="w-3.5 h-3.5"></i>
+          <i data-lucide="battery-medium" class="w-4 h-4"></i>
+        </div>
+      </div>
+
+      <!-- ACTIVE SINGLE SCREEN VIEWPORT -->
+      <div id="mobile-viewport" class="relative flex-1 w-full overflow-y-auto overflow-x-hidden no-scrollbar bg-slate-50">
+        
+        <!-- SCREEN 1: HOME FEED -->
+        <div id="m-screen-home" class="fade-enter w-full min-h-full pb-24">
+          <!-- Top Header -->
+          <div class="p-4 bg-white border-b border-slate-100">
+            <div class="flex items-center justify-between">
+              <div>
+                <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight">MealMatch</h2>
+                <div onclick="openCampusModal()" class="flex items-center gap-1 text-xs font-semibold text-brand-600 mt-0.5 cursor-pointer hover:underline">
+                  <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
+                  <span id="m-campus-label">North Campus • UC Berkeley</span>
+                  <i data-lucide="chevron-down" class="w-3 h-3 text-brand-500"></i>
+                </div>
+              </div>
+              <div onclick="navigateTo('impact')" class="w-10 h-10 rounded-full bg-brand-500 flex items-center justify-center text-white shadow-md shadow-brand-500/20 cursor-pointer active:scale-95 transition">
+                <i data-lucide="leaf" class="w-5 h-5"></i>
+              </div>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="mt-3.5 relative">
+              <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+              <input id="m-search-input" type="text" placeholder="Search food, events or places" oninput="handleSearch(this.value)" class="w-full bg-slate-100 text-sm pl-10 pr-10 py-2.5 rounded-full border border-slate-200/80 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition text-slate-800 placeholder-slate-400 font-medium">
+              <button onclick="openSortDropdown()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                <i data-lucide="sliders-horizontal" class="w-4 h-4"></i>
+              </button>
+            </div>
+
+            <!-- Filter Chips -->
+            <div class="flex items-center gap-2 mt-3.5 overflow-x-auto no-scrollbar py-0.5 text-xs font-semibold">
+              <button onclick="handleFilter('All', this)" class="m-filter-chip px-3.5 py-1.5 rounded-full bg-slate-900 text-white shrink-0 shadow-sm transition">All</button>
+              <button onclick="handleFilter('Vegan', this)" class="m-filter-chip px-3.5 py-1.5 rounded-full bg-white text-slate-600 border border-slate-200 shrink-0 hover:bg-slate-50 transition">Vegan</button>
+              <button onclick="handleFilter('Halal', this)" class="m-filter-chip px-3.5 py-1.5 rounded-full bg-white text-slate-600 border border-slate-200 shrink-0 hover:bg-slate-50 transition">Halal</button>
+              <button onclick="handleFilter('Hot Meals', this)" class="m-filter-chip px-3.5 py-1.5 rounded-full bg-white text-slate-600 border border-slate-200 shrink-0 hover:bg-slate-50 transition">Hot Meals</button>
+              <button onclick="handleFilter('Snacks', this)" class="m-filter-chip px-3.5 py-1.5 rounded-full bg-white text-slate-600 border border-slate-200 shrink-0 hover:bg-slate-50 transition">Snacks</button>
+            </div>
+          </div>
+
+          <!-- Hero Promo Banner -->
+          <div class="px-4 mt-4">
+            <div onclick="selectDrop('drop_1')" class="bg-gradient-to-br from-brand-900 to-brand-950 p-4 rounded-2xl text-white shadow-lg shadow-brand-900/20 relative overflow-hidden cursor-pointer active:scale-[0.99] transition group">
+              <div class="absolute -right-6 -bottom-6 w-28 h-28 bg-brand-500/20 rounded-full blur-2xl"></div>
+              
+              <div class="flex items-center justify-between">
+                <div>
+                  <span class="text-[10px] font-extrabold tracking-widest text-brand-300 uppercase bg-brand-800/80 px-2 py-0.5 rounded-full border border-brand-700/50">CAMPUS FOOD RESCUE</span>
+                  <h3 class="text-lg font-bold text-white mt-1.5 leading-snug"><span id="m-banner-count">3</span> Active Drops Nearby</h3>
+                  <p class="text-xs text-brand-200/90 mt-0.5">Good food. Less waste. All yours.</p>
+                </div>
+                <div class="w-9 h-9 rounded-full bg-brand-500 group-hover:bg-brand-400 flex items-center justify-center text-white shrink-0 shadow transition">
+                  <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section Header with Interactive Sort Dropdown -->
+          <div class="px-4 mt-5 flex items-center justify-between relative">
+            <h3 id="m-section-heading" class="text-sm font-bold text-slate-900 tracking-tight">Fresh around you</h3>
+            
+            <div class="relative">
+              <button onclick="toggleSortMenu('m-sort-menu')" class="text-xs font-semibold text-slate-600 hover:text-slate-900 flex items-center gap-1 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200 transition">
+                <span id="m-sort-label">Closest first</span>
+                <i data-lucide="chevron-down" class="w-3 h-3"></i>
+              </button>
+
+              <div id="m-sort-menu" class="hidden absolute right-0 mt-1 w-36 bg-white border border-slate-200 rounded-xl shadow-xl py-1 text-xs font-semibold z-30">
+                <button onclick="applySort('closest', 'Closest first')" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700">Closest first</button>
+                <button onclick="applySort('expiring', 'Expiring soonest')" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700">Expiring soonest</button>
+                <button onclick="applySort('portions', 'Most portions')" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700">Most portions</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dynamic Drops Card List -->
+          <div id="m-drops-list" class="px-4 mt-3 space-y-3"></div>
+        </div>
+
+        <!-- SCREEN 2: DETAILS VIEW -->
+        <div id="m-screen-detail" class="fade-enter hidden w-full min-h-full pb-28 bg-white">
+          <div class="relative w-full h-64 bg-slate-100">
+            <img id="m-detail-img" src="" alt="Food" class="w-full h-full object-cover">
+            
+            <div class="absolute top-4 left-4 right-4 flex items-center justify-between z-10">
+              <button onclick="navigateTo('home')" class="w-9 h-9 rounded-full bg-white/90 backdrop-blur text-slate-800 shadow-md flex items-center justify-center hover:bg-white active:scale-90 transition">
+                <i data-lucide="arrow-left" class="w-5 h-5"></i>
+              </button>
+              <div class="flex items-center gap-2">
+                <button id="m-detail-bookmark-btn" onclick="toggleCurrentBookmark()" class="w-9 h-9 rounded-full bg-white/90 backdrop-blur text-slate-800 shadow-md flex items-center justify-center hover:bg-white active:scale-90 transition">
+                  <i data-lucide="bookmark" class="w-4 h-4"></i>
+                </button>
+                <button onclick="shareDrop()" class="w-9 h-9 rounded-full bg-white/90 backdrop-blur text-slate-800 shadow-md flex items-center justify-center hover:bg-white active:scale-90 transition">
+                  <i data-lucide="share-2" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="absolute bottom-3 left-4 bg-brand-950/80 backdrop-blur-md text-white text-[11px] font-bold tracking-wider px-3 py-1 rounded-full border border-brand-800 flex items-center gap-1.5 shadow">
+              <span class="w-2 h-2 rounded-full bg-brand-400 animate-pulse"></span>
+              <span>FREE FOOD • GOOD MOOD</span>
+            </div>
+          </div>
+
+          <div class="p-4">
+            <span id="m-detail-event" class="text-[11px] font-extrabold tracking-wider text-slate-400 uppercase">CAMPUS EVENT</span>
+            <div class="flex items-start justify-between mt-1">
+              <h2 id="m-detail-title" class="text-xl font-extrabold text-slate-900 leading-tight">Drop Title</h2>
+              <button onclick="toggleCurrentBookmark()" class="text-slate-400 hover:text-brand-600 transition pt-1">
+                <i data-lucide="bookmark" class="w-5 h-5"></i>
+              </button>
+            </div>
+
+            <div class="flex items-center gap-2 mt-2 text-xs font-semibold text-brand-700">
+              <i data-lucide="users" class="w-4 h-4 text-brand-500"></i>
+              <span id="m-detail-host">Hosted by Host</span>
+            </div>
+
+            <div class="flex items-start gap-2 mt-2 text-xs text-slate-600">
+              <i data-lucide="map-pin" class="w-4 h-4 text-slate-400 shrink-0 mt-0.5"></i>
+              <div>
+                <p id="m-detail-location" class="font-semibold text-slate-800">Building, Room</p>
+                <p id="m-detail-distance" class="text-[11px] text-slate-400">Campus • 0.2 mi away</p>
+              </div>
+            </div>
+
+            <div class="mt-4 p-3 bg-slate-50 rounded-xl border border-slate-100">
+              <div class="flex items-center justify-between text-xs font-bold mb-1.5">
+                <span id="m-detail-remaining-label" class="text-slate-900">12 boxes left</span>
+                <span id="m-detail-total-label" class="text-slate-400 font-medium">of 24 prepared</span>
+              </div>
+              <div class="w-full h-2.5 bg-slate-200 rounded-full overflow-hidden">
+                <div id="m-detail-progress-bar" class="h-full bg-brand-500 rounded-full transition-all duration-500" style="width: 50%;"></div>
+              </div>
+            </div>
+
+            <div class="mt-4">
+              <h4 class="text-xs font-bold text-slate-900 uppercase tracking-wider mb-2">Good to know</h4>
+              <div id="m-detail-badges" class="flex flex-wrap gap-2 text-xs font-medium text-slate-700"></div>
+            </div>
+
+            <div class="mt-4 p-3.5 rounded-xl bg-brand-50/60 border border-brand-100 flex items-start gap-3">
+              <div class="w-8 h-8 rounded-lg bg-brand-100 text-brand-700 flex items-center justify-center shrink-0">
+                <i data-lucide="door-open" class="w-4 h-4"></i>
+              </div>
+              <div class="text-xs">
+                <h5 class="font-bold text-brand-900 mb-0.5">Pickup instructions</h5>
+                <p id="m-detail-instructions" class="text-slate-600 leading-relaxed">Instructions</p>
+              </div>
+            </div>
+
+            <div class="mt-4 text-center">
+              <p class="text-[11px] font-semibold text-brand-700">Free to you. Better for the planet.</p>
+              <p class="text-[10px] text-slate-400 mt-0.5">Please only take what you can eat.</p>
+            </div>
+          </div>
+
+          <div class="sticky bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur border-t border-slate-100 shadow-lg z-30 mt-6">
+            <button id="m-claim-btn" onclick="executeClaim()" class="w-full bg-brand-500 hover:bg-brand-600 active:scale-[0.98] transition-all text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-brand-500/25 flex items-center justify-center gap-2 text-sm">
+              <i data-lucide="lock" class="w-4 h-4"></i>
+              <span id="m-claim-btn-text">Claim 1 Box (Hold for 20m)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- SCREEN 3: RESERVATION PASS -->
+        <div id="m-screen-pass" class="fade-enter hidden w-full min-h-full pb-24 p-4 bg-slate-50 flex flex-col justify-between">
+          <div>
+            <div class="text-center mt-2">
+              <div class="w-14 h-14 mx-auto rounded-full bg-brand-100 text-brand-600 flex items-center justify-center mb-2.5 shadow-sm ring-8 ring-brand-50">
+                <i data-lucide="check" class="w-8 h-8 stroke-[3]"></i>
+              </div>
+              <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight">Portion Reserved!</h2>
+              <p class="text-xs text-slate-500 mt-1">A good meal. An even better impact.</p>
+            </div>
+
+            <div class="mt-4 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-md text-center">
+              <div class="flex items-center justify-between text-[11px] font-bold tracking-wider text-slate-400 mb-3 border-b border-slate-100 pb-2">
+                <span>YOUR PICKUP PASS</span>
+                <span class="bg-brand-50 text-brand-700 font-extrabold px-2 py-0.5 rounded-md border border-brand-100">1 BOX</span>
+              </div>
+
+              <div class="w-44 h-44 mx-auto bg-slate-50 p-3 rounded-xl border border-slate-200 flex items-center justify-center">
+                <svg viewBox="0 0 100 100" class="w-full h-full text-slate-900" fill="currentColor">
+                  <rect x="5" y="5" width="26" height="26" rx="4" fill="none" stroke="currentColor" stroke-width="6"/>
+                  <rect x="12" y="12" width="12" height="12" rx="2"/>
+                  <rect x="69" y="5" width="26" height="26" rx="4" fill="none" stroke="currentColor" stroke-width="6"/>
+                  <rect x="76" y="12" width="12" height="12" rx="2"/>
+                  <rect x="5" y="69" width="26" height="26" rx="4" fill="none" stroke="currentColor" stroke-width="6"/>
+                  <rect x="12" y="76" width="12" height="12" rx="2"/>
+                  <rect x="38" y="10" width="8" height="6"/>
+                  <rect x="52" y="10" width="8" height="6"/>
+                  <rect x="38" y="24" width="20" height="7"/>
+                  <rect x="10" y="38" width="8" height="18"/>
+                  <rect x="24" y="38" width="7" height="8"/>
+                  <rect x="38" y="38" width="8" height="8"/>
+                  <rect x="54" y="38" width="16" height="8"/>
+                  <rect x="78" y="38" width="12" height="8"/>
+                  <rect x="38" y="54" width="12" height="8"/>
+                  <rect x="56" y="54" width="8" height="16"/>
+                  <rect x="70" y="54" width="20" height="8"/>
+                  <rect x="38" y="70" width="8" height="20"/>
+                  <rect x="52" y="76" width="14" height="14"/>
+                  <rect x="74" y="70" width="8" height="20"/>
+                </svg>
+              </div>
+
+              <h3 id="m-pass-code-text" class="text-xl font-mono font-bold tracking-wider text-slate-900 mt-3">MM-CAL-2084</h3>
+              <p id="m-pass-subtext" class="text-[11px] text-slate-400 mt-0.5">Show this pass to the host to collect your box</p>
+
+              <div class="mt-4 p-2.5 rounded-xl bg-brand-50 border border-brand-100 flex items-center justify-between text-xs font-semibold text-brand-900">
+                <div class="flex items-center gap-1.5 text-brand-700">
+                  <i data-lucide="clock" class="w-4 h-4"></i>
+                  <span>Your box is held for</span>
+                </div>
+                <span id="m-countdown-timer" class="font-mono text-sm font-bold text-brand-700 bg-white px-2 py-0.5 rounded shadow-sm">20:00</span>
+              </div>
+            </div>
+
+            <!-- Stylized Campus Walking Map (Exact Figma Screen 3) -->
+            <div class="mt-4 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-sm">
+              <div class="flex items-center justify-between text-xs font-bold mb-2">
+                <span class="text-slate-800">Your pickup spot</span>
+                <span id="m-pass-walk-time" class="text-slate-400 font-medium">4 min walk</span>
+              </div>
+
+              <div class="w-full h-24 rounded-xl bg-slate-100 border border-slate-200 relative overflow-hidden flex items-center justify-center p-2">
+                <div class="absolute inset-0 bg-slate-100 opacity-60">
+                  <div class="absolute w-full h-3 bg-white top-8 -rotate-3"></div>
+                  <div class="absolute w-3 h-full bg-white left-12"></div>
+                  <div class="absolute w-3 h-full bg-white right-20"></div>
+                </div>
+
+                <div class="absolute left-6 top-4 bg-slate-200 text-[9px] font-bold text-slate-500 px-2 py-1 rounded">SODA HALL</div>
+                <div id="m-pass-map-pin" class="absolute right-6 top-3 bg-brand-100 text-[9px] font-bold text-brand-800 px-2.5 py-1 rounded border border-brand-200 shadow-sm flex items-center gap-1">
+                  <span class="w-2 h-2 rounded-full bg-brand-600"></span>
+                  <span id="m-pass-map-location">Bechtel Hall • Rm 210</span>
+                </div>
+
+                <svg class="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M 50 65 Q 120 70 240 30" fill="none" stroke="#10B981" stroke-width="3" stroke-dasharray="5,4" />
+                  <circle cx="50" cy="65" r="5" fill="#3B82F6" stroke="#FFFFFF" stroke-width="2" />
+                  <circle cx="240" cy="30" r="5" fill="#10B981" stroke="#FFFFFF" stroke-width="2" />
+                </svg>
+
+                <div class="absolute left-4 bottom-2 bg-white/90 backdrop-blur px-2 py-0.5 rounded text-[10px] font-semibold text-slate-600 shadow-sm">
+                  You are here
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Primary Actions (Figma Walking Directions + Complete Pickup) -->
+          <div class="mt-4 space-y-2">
+            <!-- 1. Primary CTA: Get Walking Directions (Exact Figma Screen 3) -->
+            <button onclick="openDirectionsModal()" class="w-full bg-brand-500 hover:bg-brand-600 active:scale-[0.98] transition text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-brand-500/25 flex items-center justify-center gap-2 text-sm">
+              <i data-lucide="navigation" class="w-4 h-4"></i>
+              <span>Get Walking Directions</span>
+              <i data-lucide="arrow-right" class="w-4 h-4 ml-1"></i>
+            </button>
+
+            <!-- 2. Pickup Confirmation -->
+            <button onclick="markPickupCompleted()" class="w-full bg-slate-900 hover:bg-black active:scale-[0.98] transition text-white font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 text-xs">
+              <i data-lucide="check-circle" class="w-4 h-4 text-brand-400"></i>
+              <span>I Received My Meal (Complete Pickup)</span>
+            </button>
+
+            <!-- 3. Navigation Controls -->
+            <div class="flex gap-2 pt-1">
+              <button onclick="navigateTo('home')" class="flex-1 bg-white hover:bg-slate-100 active:scale-[0.98] transition text-slate-700 font-semibold py-2 px-3 rounded-xl border border-slate-200 text-xs text-center">
+                Back to Home
+              </button>
+              <button onclick="cancelActiveReservation()" class="bg-red-50 hover:bg-red-100 active:scale-[0.98] transition text-red-600 font-semibold py-2 px-3 rounded-xl border border-red-200 text-xs">
+                Cancel Hold
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- SCREEN 4: IMPACT & PROFILE -->
+        <div id="m-screen-impact" class="fade-enter hidden w-full min-h-full pb-24 p-4 bg-slate-50">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+            <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight">Your impact</h2>
+            <button onclick="openSettingsModal()" class="w-9 h-9 rounded-full hover:bg-slate-200 flex items-center justify-center text-slate-600 transition">
+              <i data-lucide="settings" class="w-5 h-5"></i>
+            </button>
+          </div>
+
+          <div class="mt-4 bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-3.5">
+            <div class="w-14 h-14 rounded-full overflow-hidden shrink-0 border-2 border-brand-500 shadow-sm">
+              <img id="m-profile-avatar" src="/assets/avatar.jpg" alt="Alex Chen" class="w-full h-full object-cover">
+            </div>
+            <div>
+              <div class="flex items-center gap-1.5">
+                <h3 id="m-profile-name" class="font-extrabold text-slate-900 text-base">Alex Chen</h3>
+                <span class="bg-brand-50 text-brand-700 text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 border border-brand-200">
+                  <i data-lucide="shield-check" class="w-3 h-3 text-brand-600"></i>
+                  <span>Campus verified</span>
+                </span>
+              </div>
+              <p id="m-profile-major" class="text-xs text-slate-500 font-medium">Cognitive Science '27 • UC Berkeley</p>
+              <p class="text-[11px] text-brand-600 font-semibold mt-0.5">Small saves. Big difference.</p>
+            </div>
+          </div>
+
+          <div class="mt-5">
+            <span class="text-[11px] font-extrabold tracking-wider text-slate-400 uppercase">YOUR SEMESTER, SO FAR</span>
+            <div class="grid grid-cols-3 gap-2.5 mt-2">
+              
+              <div class="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-sm text-center flex flex-col justify-between">
+                <div class="w-7 h-7 mx-auto rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center mb-1">
+                  <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+                </div>
+                <div>
+                  <h4 id="m-stat-meals" class="text-xl font-extrabold text-slate-900 leading-tight">14</h4>
+                  <p class="text-[10px] font-semibold text-slate-500 mt-0.5">Meals Rescued</p>
+                </div>
+              </div>
+
+              <div class="bg-brand-900 text-white p-3 rounded-2xl shadow-md shadow-brand-900/20 text-center flex flex-col justify-between border border-brand-800">
+                <div class="w-7 h-7 mx-auto rounded-lg bg-brand-800 text-brand-300 flex items-center justify-center mb-1">
+                  <i data-lucide="leaf" class="w-4 h-4"></i>
+                </div>
+                <div>
+                  <h4 id="m-stat-co2" class="text-xl font-extrabold text-white leading-tight">18.5</h4>
+                  <p class="text-[10px] font-semibold text-brand-200 mt-0.5">kg CO₂ Saved</p>
+                </div>
+              </div>
+
+              <div class="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-sm text-center flex flex-col justify-between">
+                <div class="w-7 h-7 mx-auto rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center mb-1">
+                  <i data-lucide="dollar-sign" class="w-4 h-4"></i>
+                </div>
+                <div>
+                  <h4 id="m-stat-dollars" class="text-xl font-extrabold text-slate-900 leading-tight">$140</h4>
+                  <p class="text-[10px] font-semibold text-slate-500 mt-0.5">Dollars Saved</p>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <div class="mt-5">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[11px] font-extrabold tracking-wider text-slate-400 uppercase">ACTIVE RESERVATIONS</span>
+              <span id="m-active-res-badge" class="bg-brand-100 text-brand-800 font-bold text-[10px] px-1.5 py-0.5 rounded-full">1</span>
+            </div>
+            
+            <div id="m-profile-active-card" onclick="navigateTo('pass')" class="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition cursor-pointer flex items-center gap-3">
+              <div class="w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-slate-100">
+                <img id="m-profile-res-img" src="/assets/sandwiches.jpg" alt="Sandwiches" class="w-full h-full object-cover">
+              </div>
+              <div class="flex-1 min-w-0">
+                <h4 id="m-profile-res-title" class="text-xs font-bold text-slate-900 truncate">Gourmet sandwiches</h4>
+                <p id="m-profile-res-location" class="text-[11px] text-slate-500">Bechtel Hall • Room 210</p>
+                <div class="flex items-center gap-1 text-[10px] text-brand-600 font-semibold mt-0.5">
+                  <i data-lucide="clock" class="w-3 h-3"></i>
+                  <span id="m-profile-res-hold">20 min hold</span>
+                </div>
+              </div>
+              <div class="text-brand-600 text-xs font-bold flex items-center gap-0.5">
+                <span>View pass</span>
+                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+              </div>
+            </div>
+
+            <div id="m-profile-no-res" class="hidden p-4 rounded-xl bg-slate-100 text-center text-xs text-slate-500">
+              No active reservations. Browse drops on the Home feed!
+            </div>
+          </div>
+
+          <div class="mt-5">
+            <span class="text-[11px] font-extrabold tracking-wider text-slate-400 uppercase mb-2 block">FAVORITE DROP SPOTS</span>
+            <div id="m-favorite-spots-list" class="space-y-2"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- FIXED BOTTOM NAVIGATION BAR -->
+      <nav class="relative z-40 w-full h-[68px] bg-white border-t border-slate-200/80 px-6 flex items-center justify-between shrink-0 select-none">
+        
+        <button onclick="navigateTo('home')" class="m-nav-tab flex flex-col items-center gap-1 text-brand-600 font-bold transition group" data-tab="home">
+          <i data-lucide="compass" class="w-5 h-5 group-hover:scale-110 transition"></i>
+          <span class="text-[10px] tracking-tight">Explore</span>
+          <span class="nav-dot w-1.5 h-1.5 rounded-full bg-brand-600 -mt-0.5"></span>
+        </button>
+
+        <button onclick="toggleSavedFilter()" class="m-nav-tab flex flex-col items-center gap-1 text-slate-400 font-medium transition hover:text-slate-700 group" data-tab="saved">
+          <i data-lucide="bookmark" class="w-5 h-5 group-hover:scale-110 transition"></i>
+          <span class="text-[10px] tracking-tight">Saved</span>
+        </button>
+
+        <button onclick="openPostModal()" class="m-nav-tab flex flex-col items-center gap-1 text-brand-600 font-bold transition group" data-tab="post">
+          <div class="w-9 h-9 -mt-3 rounded-full bg-brand-500 text-white flex items-center justify-center shadow-lg shadow-brand-500/30 group-hover:bg-brand-600 group-hover:scale-105 active:scale-95 transition">
+            <i data-lucide="plus" class="w-5 h-5 stroke-[2.5]"></i>
+          </div>
+          <span class="text-[10px] tracking-tight -mt-0.5">Post Drop</span>
+        </button>
+
+        <button onclick="navigateTo('impact')" class="m-nav-tab flex flex-col items-center gap-1 text-slate-400 font-medium transition hover:text-slate-700 group" data-tab="impact">
+          <i data-lucide="user" class="w-5 h-5 group-hover:scale-110 transition"></i>
+          <span class="text-[10px] tracking-tight">Profile</span>
+        </button>
+
+      </nav>
+
+      <!-- iOS Home Indicator -->
+      <div class="w-full h-5 bg-white flex items-center justify-center pb-1">
+        <div class="w-32 h-1 bg-slate-900/30 rounded-full"></div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- 2. PC DESKTOP MODE (Full-width Desktop UI with Same Exact Figma Styling)  -->
+  <!-- ========================================================================= -->
+  <div id="pc-wrapper" class="hidden w-full max-w-6xl flex-1 px-4 sm:px-8 py-6">
+    
+    <!-- Desktop Secondary Subheader Navigation -->
+    <div class="flex items-center justify-between pb-4 border-b border-slate-800 text-white mb-6">
+      <div class="flex items-center gap-6 text-sm font-semibold">
+        <button onclick="navigateTo('home')" class="pc-nav-btn text-brand-400 border-b-2 border-brand-400 pb-2 transition flex items-center gap-2" data-tab="home">
+          <i data-lucide="compass" class="w-4 h-4"></i>
+          <span>Campus Drops</span>
+        </button>
+        <button onclick="toggleSavedFilter()" class="pc-nav-btn text-slate-400 hover:text-white pb-2 transition flex items-center gap-2" data-tab="saved">
+          <i data-lucide="bookmark" class="w-4 h-4"></i>
+          <span id="pc-saved-count-label">Saved Drops</span>
+        </button>
+        <button onclick="navigateTo('pass')" class="pc-nav-btn text-slate-400 hover:text-white pb-2 transition flex items-center gap-2" data-tab="pass">
+          <i data-lucide="ticket" class="w-4 h-4"></i>
+          <span>My Pickup Pass</span>
+        </button>
+        <button onclick="navigateTo('impact')" class="pc-nav-btn text-slate-400 hover:text-white pb-2 transition flex items-center gap-2" data-tab="impact">
+          <i data-lucide="award" class="w-4 h-4"></i>
+          <span>Impact Dashboard</span>
+        </button>
+      </div>
+
+      <div class="flex items-center gap-3 text-xs text-slate-400">
+        <div onclick="openCampusModal()" class="flex items-center gap-1.5 bg-slate-800/80 px-3 py-1.5 rounded-full border border-slate-700 cursor-pointer hover:border-brand-500 transition">
+          <span class="w-2 h-2 rounded-full bg-brand-400 animate-pulse"></span>
+          <span id="pc-campus-label" class="text-white font-medium">North Campus • UC Berkeley</span>
+          <i data-lucide="chevron-down" class="w-3 h-3 text-slate-400"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- PC SCREEN 1: HOME FEED -->
+    <div id="pc-screen-home" class="fade-enter">
+      
+      <!-- Top Grid: Hero Banner + Active Pass Quick Glance -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        
+        <!-- Left: Hero Banner -->
+        <div class="lg:col-span-2 bg-gradient-to-br from-brand-900 to-brand-950 p-6 rounded-3xl text-white shadow-xl relative overflow-hidden flex flex-col justify-between border border-brand-800">
+          <div class="absolute -right-10 -bottom-10 w-44 h-44 bg-brand-500/20 rounded-full blur-3xl"></div>
+          
+          <div>
+            <span class="text-xs font-extrabold tracking-widest text-brand-300 uppercase bg-brand-800/80 px-3 py-1 rounded-full border border-brand-700/50">CAMPUS FOOD RESCUE</span>
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-white mt-3 leading-tight"><span id="pc-banner-count">3</span> Active Drops Nearby</h2>
+            <p class="text-sm text-brand-200 mt-1 max-w-md">Good food. Less waste. Free catered portions ready for students across UC Berkeley.</p>
+          </div>
+
+          <div class="mt-6 flex flex-wrap items-center gap-3">
+            <button onclick="selectDrop('drop_1')" class="bg-brand-500 hover:bg-brand-400 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-lg shadow-brand-500/30 transition flex items-center gap-2">
+              <span>View Featured Drop</span>
+              <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </button>
+            <button onclick="openPostModal()" class="bg-white/10 hover:bg-white/20 text-white font-semibold text-xs px-4 py-2.5 rounded-xl backdrop-blur transition border border-white/10">
+              Post Extra Food
+            </button>
+          </div>
+        </div>
+
+        <!-- Right: Active Reservation Card Preview -->
+        <div id="pc-active-pass-widget" class="bg-slate-800/90 border border-slate-700 p-5 rounded-3xl flex flex-col justify-between text-white shadow-lg">
+          <div>
+            <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-700/80">
+              <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">YOUR ACTIVE PASS</span>
+              <span class="bg-brand-500/20 text-brand-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-brand-500/30">1 HOLD</span>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <div class="w-14 h-14 rounded-2xl overflow-hidden shrink-0 bg-slate-700">
+                <img id="pc-pass-widget-img" src="/assets/sandwiches.jpg" alt="Drop" class="w-full h-full object-cover">
+              </div>
+              <div class="min-w-0 flex-1">
+                <h4 id="pc-pass-widget-title" class="text-sm font-bold text-white truncate">Gourmet Sandwiches</h4>
+                <p id="pc-pass-widget-location" class="text-xs text-slate-400 truncate">Bechtel Hall • Room 210</p>
+                <div class="flex items-center gap-1.5 text-xs text-amber-400 font-semibold mt-1">
+                  <i data-lucide="clock" class="w-3.5 h-3.5"></i>
+                  <span id="pc-pass-widget-timer">20:00 remaining</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-slate-700/80 flex items-center gap-2">
+            <button onclick="navigateTo('pass')" class="flex-1 bg-brand-500 hover:bg-brand-400 text-white font-bold text-xs py-2 px-3 rounded-xl transition text-center">
+              Open QR Ticket
+            </button>
+            <button onclick="markPickupCompleted()" class="bg-slate-700 hover:bg-slate-600 text-white text-xs py-2 px-3 rounded-xl transition">
+              Picked Up
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Search & Category Filters -->
+      <div class="bg-slate-800/90 border border-slate-700 p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
+        <div class="flex items-center gap-2 overflow-x-auto no-scrollbar w-full sm:w-auto text-xs font-semibold">
+          <button onclick="handleFilter('All', this)" class="pc-filter-chip px-4 py-2 rounded-xl bg-white text-slate-900 shadow transition shrink-0">All Drops</button>
+          <button onclick="handleFilter('Vegan', this)" class="pc-filter-chip px-4 py-2 rounded-xl bg-slate-900/60 text-slate-300 border border-slate-700 hover:text-white transition shrink-0">Vegan</button>
+          <button onclick="handleFilter('Halal', this)" class="pc-filter-chip px-4 py-2 rounded-xl bg-slate-900/60 text-slate-300 border border-slate-700 hover:text-white transition shrink-0">Halal</button>
+          <button onclick="handleFilter('Hot Meals', this)" class="pc-filter-chip px-4 py-2 rounded-xl bg-slate-900/60 text-slate-300 border border-slate-700 hover:text-white transition shrink-0">Hot Meals</button>
+          <button onclick="handleFilter('Snacks', this)" class="pc-filter-chip px-4 py-2 rounded-xl bg-slate-900/60 text-slate-300 border border-slate-700 hover:text-white transition shrink-0">Snacks</button>
+        </div>
+
+        <div class="flex items-center gap-3 w-full sm:w-auto">
+          <!-- Sort Dropdown on PC -->
+          <div class="relative">
+            <button onclick="toggleSortMenu('pc-sort-menu')" class="bg-slate-900 text-xs px-3.5 py-2.5 rounded-xl border border-slate-700 text-slate-300 hover:text-white flex items-center gap-2 font-medium">
+              <i data-lucide="arrow-down-up" class="w-3.5 h-3.5 text-slate-400"></i>
+              <span id="pc-sort-label">Closest first</span>
+              <i data-lucide="chevron-down" class="w-3 h-3 text-slate-400"></i>
+            </button>
+
+            <div id="pc-sort-menu" class="hidden absolute right-0 mt-1 w-40 bg-slate-900 border border-slate-700 rounded-xl shadow-xl py-1 text-xs font-semibold z-30">
+              <button onclick="applySort('closest', 'Closest first')" class="w-full text-left px-3 py-2 hover:bg-slate-800 text-slate-200">Closest first</button>
+              <button onclick="applySort('expiring', 'Expiring soonest')" class="w-full text-left px-3 py-2 hover:bg-slate-800 text-slate-200">Expiring soonest</button>
+              <button onclick="applySort('portions', 'Most portions')" class="w-full text-left px-3 py-2 hover:bg-slate-800 text-slate-200">Most portions</button>
+            </div>
+          </div>
+
+          <div class="relative w-full sm:w-64">
+            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+            <input type="text" placeholder="Search food, room or host..." oninput="handleSearch(this.value)" class="w-full bg-slate-900 text-xs pl-10 pr-4 py-2.5 rounded-xl border border-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500">
+          </div>
+        </div>
+      </div>
+
+      <!-- Drops Grid (Cards with Same Figma UI) -->
+      <div>
+        <div class="flex items-center justify-between mb-4">
+          <h3 id="pc-section-heading" class="text-base font-extrabold text-white">Available Food Drops Around Campus</h3>
+          <span class="text-xs text-slate-400">Real-time inventory</span>
+        </div>
+
+        <div id="pc-drops-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+      </div>
+
+    </div>
+
+    <!-- PC SCREEN 2: DETAILS VIEW -->
+    <div id="pc-screen-detail" class="fade-enter hidden bg-white rounded-3xl p-6 shadow-2xl border border-slate-200">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-6">
+        <button onclick="navigateTo('home')" class="flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-slate-900 transition">
+          <i data-lucide="arrow-left" class="w-4 h-4"></i>
+          <span>Back to All Drops</span>
+        </button>
+        <div class="flex items-center gap-2">
+          <button id="pc-detail-bookmark-btn" onclick="toggleCurrentBookmark()" class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+            <i data-lucide="bookmark" class="w-4 h-4"></i>
+          </button>
+          <span class="text-xs font-bold text-brand-600 bg-brand-50 px-3 py-1 rounded-full border border-brand-100">
+            FREE FOOD • GOOD MOOD
+          </span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+        <div class="rounded-2xl overflow-hidden bg-slate-100 shadow-md relative h-80">
+          <img id="pc-detail-img" src="" alt="Food" class="w-full h-full object-cover">
+          <div class="absolute bottom-3 left-4 bg-brand-950/80 backdrop-blur text-white text-xs font-bold px-3 py-1 rounded-full">
+            Verified Campus Drop
+          </div>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <span id="pc-detail-event" class="text-xs font-extrabold tracking-wider text-slate-400 uppercase">ENGINEERING DEPT RECEPTION</span>
+            <h2 id="pc-detail-title" class="text-2xl font-extrabold text-slate-900 mt-1">Gourmet sandwiches & fresh fruit</h2>
+            <div class="flex items-center gap-2 text-xs font-semibold text-brand-700 mt-2">
+              <i data-lucide="users" class="w-4 h-4 text-brand-500"></i>
+              <span id="pc-detail-host">Hosted by Robotics Club</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs text-slate-600 mt-1.5">
+              <i data-lucide="map-pin" class="w-4 h-4 text-slate-400"></i>
+              <span id="pc-detail-location">Bechtel Hall, Room 210</span>
+              <span class="text-slate-400">•</span>
+              <span id="pc-detail-distance">0.2 mi away</span>
+            </div>
+          </div>
+
+          <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+            <div class="flex items-center justify-between text-xs font-bold mb-2">
+              <span id="pc-detail-remaining-label" class="text-slate-900">12 boxes left</span>
+              <span id="pc-detail-total-label" class="text-slate-400 font-medium">of 24 prepared</span>
+            </div>
+            <div class="w-full h-3 bg-slate-200 rounded-full overflow-hidden">
+              <div id="pc-detail-progress-bar" class="h-full bg-brand-500 rounded-full transition-all" style="width: 50%;"></div>
+            </div>
+          </div>
+
+          <div>
+            <h4 class="text-xs font-bold text-slate-900 uppercase tracking-wider mb-2">Good to know</h4>
+            <div id="pc-detail-badges" class="flex flex-wrap gap-2 text-xs font-medium text-slate-700"></div>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-brand-50/70 border border-brand-100 flex items-start gap-3">
+            <div class="w-9 h-9 rounded-xl bg-brand-100 text-brand-700 flex items-center justify-center shrink-0">
+              <i data-lucide="door-open" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h5 class="text-xs font-bold text-brand-900">Pickup Instructions</h5>
+              <p id="pc-detail-instructions" class="text-xs text-slate-600 mt-0.5">Enter through side doors, grab box from table 2.</p>
+            </div>
+          </div>
+
+          <button id="pc-claim-btn" onclick="executeClaim()" class="w-full bg-brand-500 hover:bg-brand-600 text-white font-bold py-3.5 px-6 rounded-2xl shadow-xl shadow-brand-500/25 transition flex items-center justify-center gap-2 text-sm">
+            <i data-lucide="lock" class="w-4 h-4"></i>
+            <span id="pc-claim-btn-text">Claim 1 Box (Hold for 20m)</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PC SCREEN 3: PASS VIEW (Enhanced with Walking Map & Directions CTA) -->
+    <div id="pc-screen-pass" class="fade-enter hidden bg-white rounded-3xl p-8 shadow-2xl border border-slate-200 max-w-2xl mx-auto">
+      <div class="text-center mb-6">
+        <div class="w-16 h-16 mx-auto rounded-full bg-brand-100 text-brand-600 flex items-center justify-center mb-3 ring-8 ring-brand-50">
+          <i data-lucide="check" class="w-8 h-8 stroke-[3]"></i>
+        </div>
+        <h2 class="text-2xl font-extrabold text-slate-900">Portion Reserved!</h2>
+        <p class="text-xs text-slate-500 mt-1">A good meal. An even better impact.</p>
+      </div>
+
+      <div class="p-6 rounded-2xl border border-slate-200 bg-slate-50 text-center mb-6">
+        <div class="flex items-center justify-between text-xs font-bold text-slate-400 mb-4 pb-2 border-b border-slate-200">
+          <span>YOUR PICKUP PASS</span>
+          <span class="bg-brand-100 text-brand-800 px-2.5 py-0.5 rounded font-extrabold">1 BOX</span>
+        </div>
+
+        <div class="w-48 h-48 mx-auto bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-center">
+          <svg viewBox="0 0 100 100" class="w-full h-full text-slate-900" fill="currentColor">
+            <rect x="5" y="5" width="26" height="26" rx="4" fill="none" stroke="currentColor" stroke-width="6"/>
+            <rect x="12" y="12" width="12" height="12" rx="2"/>
+            <rect x="69" y="5" width="26" height="26" rx="4" fill="none" stroke="currentColor" stroke-width="6"/>
+            <rect x="76" y="12" width="12" height="12" rx="2"/>
+            <rect x="5" y="69" width="26" height="26" rx="4" fill="none" stroke="currentColor" stroke-width="6"/>
+            <rect x="12" y="76" width="12" height="12" rx="2"/>
+            <rect x="38" y="10" width="8" height="6"/>
+            <rect x="52" y="10" width="8" height="6"/>
+            <rect x="38" y="24" width="20" height="7"/>
+            <rect x="10" y="38" width="8" height="18"/>
+            <rect x="24" y="38" width="7" height="8"/>
+            <rect x="38" y="38" width="8" height="8"/>
+            <rect x="54" y="38" width="16" height="8"/>
+            <rect x="78" y="38" width="12" height="8"/>
+            <rect x="38" y="54" width="12" height="8"/>
+            <rect x="56" y="54" width="8" height="16"/>
+            <rect x="70" y="54" width="20" height="8"/>
+            <rect x="38" y="70" width="8" height="20"/>
+            <rect x="52" y="76" width="14" height="14"/>
+            <rect x="74" y="70" width="8" height="20"/>
+          </svg>
+        </div>
+
+        <h3 id="pc-pass-code-text" class="text-2xl font-mono font-bold tracking-wider text-slate-900 mt-4">MM-CAL-2084</h3>
+        <p id="pc-pass-subtext" class="text-xs text-slate-500 mt-1">Show this pass to the host to collect your box</p>
+
+        <div class="mt-4 p-3 bg-brand-100/60 border border-brand-200 rounded-xl flex items-center justify-between text-xs font-semibold text-brand-900">
+          <span class="flex items-center gap-1.5 text-brand-800">
+            <i data-lucide="clock" class="w-4 h-4"></i>
+            <span>Your box is held for</span>
+          </span>
+          <span id="pc-countdown-timer" class="font-mono text-base font-bold text-brand-800 bg-white px-3 py-1 rounded-lg shadow-sm">20:00</span>
+        </div>
+      </div>
+
+      <!-- Stylized Campus Walking Map on PC -->
+      <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200 mb-6">
+        <div class="flex items-center justify-between text-xs font-bold mb-2">
+          <span class="text-slate-800">Campus Pickup Location</span>
+          <span id="pc-pass-walk-time" class="text-slate-500">4 min walk</span>
+        </div>
+
+        <div class="w-full h-28 rounded-xl bg-slate-200/60 border border-slate-300/70 relative overflow-hidden flex items-center justify-center p-2">
+          <div class="absolute inset-0 bg-slate-100 opacity-60">
+            <div class="absolute w-full h-4 bg-white top-10 -rotate-2"></div>
+            <div class="absolute w-4 h-full bg-white left-20"></div>
+            <div class="absolute w-4 h-full bg-white right-28"></div>
+          </div>
+
+          <div class="absolute left-8 top-5 bg-slate-300 text-[10px] font-bold text-slate-600 px-2 py-1 rounded">SODA HALL</div>
+          <div class="absolute right-10 top-4 bg-brand-100 text-[10px] font-bold text-brand-900 px-3 py-1.5 rounded-xl border border-brand-200 shadow flex items-center gap-1.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-brand-600"></span>
+            <span id="pc-pass-map-location">Bechtel Hall • Rm 210</span>
+          </div>
+
+          <svg class="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 70 85 Q 180 90 380 40" fill="none" stroke="#10B981" stroke-width="3.5" stroke-dasharray="6,5" />
+            <circle cx="70" cy="85" r="6" fill="#3B82F6" stroke="#FFFFFF" stroke-width="2" />
+            <circle cx="380" cy="40" r="6" fill="#10B981" stroke="#FFFFFF" stroke-width="2" />
+          </svg>
+
+          <div class="absolute left-6 bottom-3 bg-white/95 backdrop-blur px-2.5 py-1 rounded-lg text-[10px] font-bold text-slate-700 shadow">
+            Current Location
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        <!-- 1. Primary CTA: Get Walking Directions -->
+        <button onclick="openDirectionsModal()" class="w-full bg-brand-500 hover:bg-brand-600 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-brand-500/25 transition flex items-center justify-center gap-2 text-sm">
+          <i data-lucide="navigation" class="w-4 h-4"></i>
+          <span>Get Walking Directions</span>
+          <i data-lucide="arrow-right" class="w-4 h-4 ml-1"></i>
+        </button>
+
+        <!-- 2. Pickup Confirmation -->
+        <button onclick="markPickupCompleted()" class="w-full bg-slate-900 hover:bg-black text-white font-bold py-3 px-4 rounded-xl transition flex items-center justify-center gap-2 text-xs">
+          <i data-lucide="check-circle" class="w-4 h-4 text-brand-400"></i>
+          <span>I Received My Meal (Complete Pickup)</span>
+        </button>
+
+        <!-- 3. Navigation Controls -->
+        <div class="flex gap-3 pt-1">
+          <button onclick="navigateTo('home')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 px-4 rounded-xl transition text-xs text-center">
+            Back to Campus Drops
+          </button>
+          <button onclick="cancelActiveReservation()" class="bg-red-50 hover:bg-red-100 text-red-600 font-bold py-2.5 px-4 rounded-xl border border-red-200 transition text-xs">
+            Cancel Hold
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PC SCREEN 4: IMPACT DASHBOARD -->
+    <div id="pc-screen-impact" class="fade-enter hidden bg-white rounded-3xl p-8 shadow-2xl border border-slate-200">
+      <div class="flex items-center justify-between pb-6 border-b border-slate-100 mb-6">
+        <div>
+          <h2 class="text-2xl font-extrabold text-slate-900">Your Impact Dashboard</h2>
+          <p class="text-xs text-slate-500 mt-1">Track your contribution to zero food waste on campus</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <button onclick="openSettingsModal()" class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition flex items-center gap-1.5 text-xs font-semibold">
+            <i data-lucide="settings" class="w-4 h-4"></i>
+            <span>Settings</span>
+          </button>
+          <button onclick="navigateTo('home')" class="text-xs font-bold text-slate-600 hover:text-slate-900 flex items-center gap-1">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+            <span>Back</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- User Profile Header -->
+      <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100 flex items-center gap-5 mb-8">
+        <div class="w-16 h-16 rounded-full overflow-hidden shrink-0 border-2 border-brand-500 shadow-md">
+          <img id="pc-profile-avatar" src="/assets/avatar.jpg" alt="Alex Chen" class="w-full h-full object-cover">
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h3 id="pc-profile-name" class="text-lg font-extrabold text-slate-900">Alex Chen</h3>
+            <span class="bg-brand-50 text-brand-700 text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1 border border-brand-200">
+              <i data-lucide="shield-check" class="w-3.5 h-3.5 text-brand-600"></i>
+              <span>Campus verified</span>
+            </span>
+          </div>
+          <p id="pc-profile-major" class="text-xs text-slate-500 font-medium mt-0.5">Cognitive Science '27 • UC Berkeley</p>
+          <p class="text-xs text-brand-600 font-semibold mt-1">Small saves. Big difference.</p>
+        </div>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+        <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200/80 text-center flex flex-col justify-between">
+          <div class="w-10 h-10 mx-auto rounded-xl bg-slate-200/80 text-slate-700 flex items-center justify-center mb-2">
+            <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h4 id="pc-stat-meals" class="text-3xl font-extrabold text-slate-900">14</h4>
+            <p class="text-xs font-semibold text-slate-500 mt-1">Meals Rescued</p>
+          </div>
+        </div>
+
+        <div class="bg-brand-900 text-white p-5 rounded-2xl shadow-lg border border-brand-800 text-center flex flex-col justify-between">
+          <div class="w-10 h-10 mx-auto rounded-xl bg-brand-800 text-brand-300 flex items-center justify-center mb-2">
+            <i data-lucide="leaf" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h4 id="pc-stat-co2" class="text-3xl font-extrabold text-white">18.5</h4>
+            <p class="text-xs font-semibold text-brand-200 mt-1">kg CO₂ Saved</p>
+          </div>
+        </div>
+
+        <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200/80 text-center flex flex-col justify-between">
+          <div class="w-10 h-10 mx-auto rounded-xl bg-slate-200/80 text-slate-700 flex items-center justify-center mb-2">
+            <i data-lucide="dollar-sign" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h4 id="pc-stat-dollars" class="text-3xl font-extrabold text-slate-900">$140</h4>
+            <p class="text-xs font-semibold text-slate-500 mt-1">Dollars Saved</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Reservation Card on PC -->
+      <div class="mb-8">
+        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Active Reservation</h4>
+        <div id="pc-impact-active-card" onclick="navigateTo('pass')" class="bg-slate-50 p-4 rounded-2xl border border-slate-200 hover:border-brand-500 transition cursor-pointer flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <div class="w-14 h-14 rounded-xl overflow-hidden shrink-0 bg-slate-200">
+              <img id="pc-impact-res-img" src="/assets/sandwiches.jpg" alt="Drop" class="w-full h-full object-cover">
+            </div>
+            <div>
+              <h5 id="pc-impact-res-title" class="text-sm font-bold text-slate-900">Gourmet Sandwiches</h5>
+              <p id="pc-impact-res-location" class="text-xs text-slate-500">Bechtel Hall • Room 210</p>
+              <span id="pc-impact-res-timer" class="text-xs font-semibold text-brand-600 mt-0.5 block">20 min hold remaining</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 text-brand-600 text-xs font-bold">
+            <span>View pickup ticket</span>
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+          </div>
+        </div>
+
+        <div id="pc-impact-no-res" class="hidden p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-500 text-center">
+          No active reservations currently held.
+        </div>
+      </div>
+
+      <!-- Favorite Spots -->
+      <div>
+        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Favorite Campus Drop Spots</h4>
+        <div id="pc-favorite-spots-list" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL 1: CAMPUS SELECTOR MODAL                                            -->
+  <!-- ========================================================================= -->
+  <div id="campus-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-100">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+        <div>
+          <h3 class="font-extrabold text-base text-slate-900">Select Campus Zone</h3>
+          <p class="text-xs text-slate-500">Filter drops by your current location</p>
+        </div>
+        <button onclick="closeCampusModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 transition">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="space-y-2 text-xs font-semibold">
+        <button onclick="selectCampusZone('North Campus')" class="w-full text-left p-3 rounded-2xl border border-slate-200 hover:border-brand-500 hover:bg-brand-50/50 flex items-center justify-between transition">
+          <div>
+            <div class="font-bold text-slate-900">North Campus</div>
+            <div class="text-[11px] text-slate-400 font-normal">Bechtel, Soda Hall, Sutardja Dai, Cory</div>
+          </div>
+          <i data-lucide="check" class="w-4 h-4 text-brand-600"></i>
+        </button>
+
+        <button onclick="selectCampusZone('Central Campus')" class="w-full text-left p-3 rounded-2xl border border-slate-200 hover:border-brand-500 hover:bg-brand-50/50 flex items-center justify-between transition">
+          <div>
+            <div class="font-bold text-slate-900">Central Campus</div>
+            <div class="text-[11px] text-slate-400 font-normal">MLK Student Union, Dwinelle, Wheeler</div>
+          </div>
+        </button>
+
+        <button onclick="selectCampusZone('South Campus')" class="w-full text-left p-3 rounded-2xl border border-slate-200 hover:border-brand-500 hover:bg-brand-50/50 flex items-center justify-between transition">
+          <div>
+            <div class="font-bold text-slate-900">South Campus</div>
+            <div class="text-[11px] text-slate-400 font-normal">Unit 1 & 2 Dorms, Channing Way</div>
+          </div>
+        </button>
+
+        <button onclick="selectCampusZone('All')" class="w-full text-left p-3 rounded-2xl border border-slate-200 hover:border-brand-500 hover:bg-brand-50/50 flex items-center justify-between transition">
+          <div>
+            <div class="font-bold text-slate-900">All UC Berkeley Campus</div>
+            <div class="text-[11px] text-slate-400 font-normal">Show drops from every department</div>
+          </div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL 2: INTERACTIVE WALKING DIRECTIONS MODAL                             -->
+  <!-- ========================================================================= -->
+  <div id="directions-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto no-scrollbar">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+        <div>
+          <h3 class="font-extrabold text-base text-slate-900">Campus Walking Route</h3>
+          <p id="directions-dest-title" class="text-xs text-brand-600 font-bold">Bechtel Hall • Room 210</p>
+        </div>
+        <button onclick="closeDirectionsModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 transition">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="bg-brand-50/80 p-3.5 rounded-2xl border border-brand-100 flex items-center justify-between mb-4 text-xs font-semibold text-brand-900">
+        <span class="flex items-center gap-2">
+          <i data-lucide="footprints" class="w-4 h-4 text-brand-600"></i>
+          <span id="directions-eta">4 min walk (0.2 mi)</span>
+        </span>
+        <span class="bg-white text-brand-700 px-2 py-0.5 rounded shadow-sm text-[11px] font-bold">Fastest Route</span>
+      </div>
+
+      <!-- Turn-by-Turn Steps -->
+      <div class="space-y-3.5 text-xs">
+        <div class="flex items-start gap-3">
+          <div class="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center shrink-0 mt-0.5 font-bold text-[11px]">1</div>
+          <div>
+            <p class="font-bold text-slate-800">Start from your current campus location</p>
+            <p class="text-slate-500 text-[11px]">Head north on the main campus plaza path.</p>
+          </div>
+        </div>
+
+        <div class="flex items-start gap-3">
+          <div class="w-6 h-6 rounded-full bg-slate-800 text-white flex items-center justify-center shrink-0 mt-0.5 font-bold text-[11px]">2</div>
+          <div>
+            <p class="font-bold text-slate-800">Pass Soda Hall toward North Gate</p>
+            <p class="text-slate-500 text-[11px]">Take the ramp down towards the Engineering Center plaza (2 mins).</p>
+          </div>
+        </div>
+
+        <div class="flex items-start gap-3">
+          <div class="w-6 h-6 rounded-full bg-slate-800 text-white flex items-center justify-center shrink-0 mt-0.5 font-bold text-[11px]">3</div>
+          <div>
+            <p class="font-bold text-slate-800">Enter Bechtel Engineering Center</p>
+            <p id="directions-instructions-step" class="text-slate-500 text-[11px]">Enter through side doors, grab box from table 2.</p>
+          </div>
+        </div>
+
+        <div class="flex items-start gap-3">
+          <div class="w-6 h-6 rounded-full bg-brand-500 text-white flex items-center justify-center shrink-0 mt-0.5 font-bold text-[11px]">4</div>
+          <div>
+            <p class="font-bold text-slate-800">Show QR Pass MM-CAL-2084</p>
+            <p class="text-slate-500 text-[11px]">Show your screen to the student club host to claim your meal.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-6 space-y-2">
+        <a id="directions-google-maps-link" href="https://maps.google.com/?q=Bechtel+Engineering+Center+UC+Berkeley" target="_blank" class="w-full bg-slate-900 hover:bg-black text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 text-xs transition">
+          <i data-lucide="map" class="w-4 h-4"></i>
+          <span>Open in Google Maps</span>
+        </a>
+        <button onclick="closeDirectionsModal()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-4 rounded-xl text-xs transition">
+          Close Directions
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL 3: POST DROP MODAL (Campus Organizer Mode)                          -->
+  <!-- ========================================================================= -->
+  <div id="post-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto no-scrollbar">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div>
+          <h3 class="font-extrabold text-lg text-slate-900">Post Food Drop</h3>
+          <p class="text-xs text-slate-500">Alert campus students to leftover food in seconds</p>
+        </div>
+        <button onclick="closePostModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 transition">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <form id="post-drop-form" onsubmit="submitPostDrop(event)" class="mt-4 space-y-3.5 text-xs font-semibold">
+        <div>
+          <label class="block text-slate-700 mb-1">Event / Department Name</label>
+          <input id="post-event" type="text" required placeholder="e.g. AI Symposium Lunch Reception" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block text-slate-700 mb-1">Food Description / Title</label>
+          <input id="post-title" type="text" required placeholder="e.g. Artisanal Pizza & Green Salad Boxes" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-slate-700 mb-1">Host Club / Organizer</label>
+            <input id="post-host" type="text" required placeholder="e.g. Data Science Society" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-slate-700 mb-1">Total Portions</label>
+            <input id="post-portions" type="number" min="1" max="100" value="15" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-slate-700 mb-1">Building & Room Number</label>
+          <input id="post-location" type="text" required placeholder="e.g. Cory Hall, Room 540" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block text-slate-700 mb-1">Campus Area</label>
+          <select id="post-area" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+            <option value="North Campus">North Campus</option>
+            <option value="Central Campus">Central Campus</option>
+            <option value="South Campus">South Campus</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-slate-700 mb-1">Dietary Tags (comma separated)</label>
+          <input id="post-tags" type="text" placeholder="e.g. Vegetarian, Nut-Free, Hot Meals" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block text-slate-700 mb-1">Pickup Instructions</label>
+          <textarea id="post-instructions" rows="2" placeholder="e.g. Enter through glass door, grab box from side counter." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:ring-2 focus:ring-brand-500 focus:outline-none"></textarea>
+        </div>
+
+        <button type="submit" class="w-full bg-brand-500 hover:bg-brand-600 active:scale-[0.98] transition text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-brand-500/25 flex items-center justify-center gap-2 text-sm mt-4">
+          <i data-lucide="check" class="w-4 h-4"></i>
+          <span>Publish Food Drop</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL 4: SETTINGS MODAL                                                   -->
+  <!-- ========================================================================= -->
+  <div id="settings-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-100">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+        <div>
+          <h3 class="font-extrabold text-base text-slate-900">Student Preferences</h3>
+          <p class="text-xs text-slate-500">Dietary alerts & notifications</p>
+        </div>
+        <button onclick="closeSettingsModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 transition">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs font-semibold text-slate-700">
+        <label class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+          <span>Push Alerts for Drops Near Me</span>
+          <input type="checkbox" checked class="w-4 h-4 accent-brand-500">
+        </label>
+        <label class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+          <span>Highlight Halal Options</span>
+          <input type="checkbox" checked class="w-4 h-4 accent-brand-500">
+        </label>
+        <label class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+          <span>Highlight Vegan / Vegetarian</span>
+          <input type="checkbox" checked class="w-4 h-4 accent-brand-500">
+        </label>
+        <label class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+          <span>Haptic & Audio Chimes</span>
+          <input type="checkbox" id="pref-audio" checked class="w-4 h-4 accent-brand-500">
+        </label>
+      </div>
+
+      <button onclick="closeSettingsModal(); showToast('Preferences updated!');" class="w-full bg-brand-500 hover:bg-brand-600 text-white font-bold py-2.5 rounded-xl text-xs mt-4">
+        Save Preferences
+      </button>
+    </div>
+  </div>
+
+  <!-- APPLICATION JAVASCRIPT LOGIC -->
+  <script>
+    // State
+    let appMode = 'mobile';
+    let currentScreen = 'home';
+    let allDrops = [];
+    let selectedDropData = null;
+    let activeReservationData = null;
+    let currentFilter = 'All';
+    let currentCampus = 'North Campus';
+    let currentSort = 'closest';
+    let searchQuery = '';
+    let isShowingSavedOnly = false;
+    let savedDropIds = JSON.parse(localStorage.getItem('mealmatch_saved') || '["drop_1"]');
+    let timerInterval = null;
+
+    // Gentle Audio Chime (Web Audio API)
+    function playChime(type = 'success') {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        if (type === 'success') {
+          osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+          osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.15); // A5
+          gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.35);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.35);
+        } else if (type === 'pickup') {
+          osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+          osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1); // E5
+          osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.2); // G5
+          gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.5);
+        }
+      } catch (e) {
+        // AudioContext disabled or blocked by browser policy
+      }
+    }
+
+    // Toast
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      const text = document.getElementById('toast-message');
+      text.textContent = msg;
+      toast.classList.remove('opacity-0', 'pointer-events-none', '-translate-y-4');
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'pointer-events-none', '-translate-y-4');
+      }, 3000);
+    }
+
+    // iOS Clock
+    function updateClock() {
+      const now = new Date();
+      const hours = now.getHours();
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const elem = document.getElementById('ios-time');
+      if (elem) elem.textContent = `${hours % 12 || 12}:${minutes}`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Mode Switcher (Mobile vs PC Desktop)
+    function setAppMode(mode) {
+      appMode = mode;
+      const mWrap = document.getElementById('mobile-wrapper');
+      const pWrap = document.getElementById('pc-wrapper');
+      const btnM = document.getElementById('btn-mode-mobile');
+      const btnP = document.getElementById('btn-mode-pc');
+
+      if (mode === 'pc') {
+        mWrap.classList.add('hidden');
+        pWrap.classList.remove('hidden');
+        btnP.classList.add('bg-brand-600', 'text-white');
+        btnP.classList.remove('text-slate-400');
+        btnM.classList.remove('bg-brand-600', 'text-white');
+        btnM.classList.add('text-slate-400');
+      } else {
+        pWrap.classList.add('hidden');
+        mWrap.classList.remove('hidden');
+        btnM.classList.add('bg-brand-600', 'text-white');
+        btnM.classList.remove('text-slate-400');
+        btnP.classList.remove('bg-brand-600', 'text-white');
+        btnP.classList.add('text-slate-400');
+      }
+      navigateTo(currentScreen);
+    }
+
+    // Navigation
+    function navigateTo(screenKey) {
+      currentScreen = screenKey;
+      window.location.hash = screenKey;
+
+      const mScreens = {
+        home: document.getElementById('m-screen-home'),
+        detail: document.getElementById('m-screen-detail'),
+        pass: document.getElementById('m-screen-pass'),
+        impact: document.getElementById('m-screen-impact'),
+      };
+
+      const pcScreens = {
+        home: document.getElementById('pc-screen-home'),
+        detail: document.getElementById('pc-screen-detail'),
+        pass: document.getElementById('pc-screen-pass'),
+        impact: document.getElementById('pc-screen-impact'),
+      };
+
+      Object.entries(mScreens).forEach(([k, el]) => {
+        if (el) {
+          if (k === screenKey) el.classList.remove('hidden');
+          else el.classList.add('hidden');
+        }
+      });
+
+      Object.entries(pcScreens).forEach(([k, el]) => {
+        if (el) {
+          if (k === screenKey) el.classList.remove('hidden');
+          else el.classList.add('hidden');
+        }
+      });
+
+      // Update Mobile Nav Tabs
+      document.querySelectorAll('.m-nav-tab').forEach(tab => {
+        const dot = tab.querySelector('.nav-dot');
+        if (dot) dot.remove();
+
+        if (tab.dataset.tab === screenKey || (screenKey === 'pass' && tab.dataset.tab === 'home')) {
+          tab.classList.remove('text-slate-400', 'font-medium');
+          tab.classList.add('text-brand-600', 'font-bold');
+          if (tab.dataset.tab !== 'post') {
+            const newDot = document.createElement('span');
+            newDot.className = 'nav-dot w-1.5 h-1.5 rounded-full bg-brand-600 -mt-0.5';
+            tab.appendChild(newDot);
+          }
+        } else {
+          tab.classList.remove('text-brand-600', 'font-bold');
+          tab.classList.add('text-slate-400', 'font-medium');
+        }
+      });
+
+      // Update PC Header Nav
+      document.querySelectorAll('.pc-nav-btn').forEach(btn => {
+        if (btn.dataset.tab === screenKey) {
+          btn.classList.add('text-brand-400', 'border-b-2', 'border-brand-400');
+          btn.classList.remove('text-slate-400');
+        } else {
+          btn.classList.remove('text-brand-400', 'border-b-2', 'border-brand-400');
+          btn.classList.add('text-slate-400');
+        }
+      });
+
+      const mViewport = document.getElementById('mobile-viewport');
+      if (mViewport) mViewport.scrollTop = 0;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      lucide.createIcons();
+    }
+
+    // -------------------------------------------------------------------------
+    // API CALLS
+    // -------------------------------------------------------------------------
+    async function fetchDrops() {
+      try {
+        const url = `/api/drops?tag=${encodeURIComponent(currentFilter)}&search=${encodeURIComponent(searchQuery)}&area=${encodeURIComponent(currentCampus)}&sort=${encodeURIComponent(currentSort)}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        allDrops = data.drops || [];
+
+        let displayed = allDrops;
+        if (isShowingSavedOnly) {
+          displayed = allDrops.filter(d => savedDropIds.includes(d.id));
+        }
+
+        renderDrops(displayed);
+        document.getElementById('m-banner-count').textContent = allDrops.length;
+        document.getElementById('pc-banner-count').textContent = allDrops.length;
+        document.getElementById('pc-saved-count-label').textContent = `Saved (${savedDropIds.length})`;
+      } catch (err) {
+        console.error('Error fetching drops:', err);
+      }
+    }
+
+    async function fetchUserProfile() {
+      try {
+        const res = await fetch('/api/user/profile');
+        const data = await res.json();
+        const profile = data.profile;
+        if (!profile) return;
+
+        // Mobile profile
+        document.getElementById('m-profile-name').textContent = profile.name;
+        document.getElementById('m-profile-major').textContent = `${profile.major} • ${profile.campus}`;
+        document.getElementById('m-profile-avatar').src = profile.avatar_url;
+        document.getElementById('m-stat-meals').textContent = profile.meals_rescued;
+        document.getElementById('m-stat-co2').textContent = profile.co2_saved;
+        document.getElementById('m-stat-dollars').textContent = `$${profile.money_saved}`;
+
+        // PC profile
+        document.getElementById('pc-profile-name').textContent = profile.name;
+        document.getElementById('pc-profile-major').textContent = `${profile.major} • ${profile.campus}`;
+        document.getElementById('pc-profile-avatar').src = profile.avatar_url;
+        document.getElementById('pc-stat-meals').textContent = profile.meals_rescued;
+        document.getElementById('pc-stat-co2').textContent = profile.co2_saved;
+        document.getElementById('pc-stat-dollars').textContent = `$${profile.money_saved}`;
+
+        // Spots list
+        const spotsHtml = profile.favorite_spots.map(s => `
+          <div onclick="selectCampusZone('${s.name}')" class="bg-white p-3 rounded-xl border border-slate-200/70 flex items-center justify-between hover:bg-slate-50 transition cursor-pointer">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <i data-lucide="building" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <h5 class="text-xs font-bold text-slate-900">${s.name}</h5>
+                <p class="text-[10px] text-slate-400">${s.area}</p>
+              </div>
+            </div>
+            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+          </div>
+        `).join('');
+
+        document.getElementById('m-favorite-spots-list').innerHTML = spotsHtml;
+        document.getElementById('pc-favorite-spots-list').innerHTML = spotsHtml;
+
+        lucide.createIcons();
+      } catch (err) {
+        console.error('Error fetching profile:', err);
+      }
+    }
+
+    async function fetchActiveReservation() {
+      try {
+        const res = await fetch('/api/reservations/active');
+        const data = await res.json();
+        activeReservationData = data.active_reservation;
+
+        const mBadge = document.getElementById('m-active-res-badge');
+        const mCard = document.getElementById('m-profile-active-card');
+        const mEmpty = document.getElementById('m-profile-no-res');
+        const pcWidget = document.getElementById('pc-active-pass-widget');
+        const pcImpactCard = document.getElementById('pc-impact-active-card');
+        const pcImpactEmpty = document.getElementById('pc-impact-no-res');
+
+        if (activeReservationData) {
+          mBadge.textContent = '1';
+          mCard.classList.remove('hidden');
+          mEmpty.classList.add('hidden');
+          if (pcWidget) pcWidget.classList.remove('opacity-40');
+          if (pcImpactCard) pcImpactCard.classList.remove('hidden');
+          if (pcImpactEmpty) pcImpactEmpty.classList.add('hidden');
+
+          // Mobile Pass
+          document.getElementById('m-profile-res-title').textContent = activeReservationData.drop_title;
+          document.getElementById('m-profile-res-location').textContent = activeReservationData.location_name;
+          document.getElementById('m-profile-res-img').src = activeReservationData.image_url;
+          document.getElementById('m-profile-res-hold').textContent = `${Math.ceil(activeReservationData.seconds_left / 60)} min hold`;
+
+          document.getElementById('m-pass-code-text').textContent = activeReservationData.pass_code;
+          document.getElementById('m-pass-subtext').textContent = `Show this pass to the ${activeReservationData.host} host`;
+          document.getElementById('m-pass-map-location').textContent = activeReservationData.location_name;
+          document.getElementById('m-pass-walk-time').textContent = activeReservationData.walk_time;
+
+          // PC Pass
+          document.getElementById('pc-pass-widget-title').textContent = activeReservationData.drop_title;
+          document.getElementById('pc-pass-widget-location').textContent = activeReservationData.location_name;
+          document.getElementById('pc-pass-widget-img').src = activeReservationData.image_url;
+          document.getElementById('pc-pass-code-text').textContent = activeReservationData.pass_code;
+          document.getElementById('pc-pass-subtext').textContent = `Show this pass to the ${activeReservationData.host} host`;
+          document.getElementById('pc-pass-map-location').textContent = activeReservationData.location_name;
+          document.getElementById('pc-pass-walk-time').textContent = activeReservationData.walk_time;
+
+          // PC Impact Screen
+          document.getElementById('pc-impact-res-title').textContent = activeReservationData.drop_title;
+          document.getElementById('pc-impact-res-location').textContent = activeReservationData.location_name;
+          document.getElementById('pc-impact-res-img').src = activeReservationData.image_url;
+          document.getElementById('pc-impact-res-timer').textContent = `${Math.ceil(activeReservationData.seconds_left / 60)} min hold remaining`;
+
+          // Directions modal sync
+          document.getElementById('directions-dest-title').textContent = `${activeReservationData.location_name} • ${activeReservationData.drop_title}`;
+          document.getElementById('directions-eta').textContent = `${activeReservationData.walk_time || '4 min walk'}`;
+          document.getElementById('directions-instructions-step').textContent = `Proceed to room and show pass code ${activeReservationData.pass_code} to collect.`;
+
+          startCountdown(activeReservationData.seconds_left);
+        } else {
+          mBadge.textContent = '0';
+          mCard.classList.add('hidden');
+          mEmpty.classList.remove('hidden');
+          if (pcWidget) pcWidget.classList.add('opacity-40');
+          if (pcImpactCard) pcImpactCard.classList.add('hidden');
+          if (pcImpactEmpty) pcImpactEmpty.classList.remove('hidden');
+        }
+      } catch (err) {
+        console.error('Error fetching reservation:', err);
+      }
+    }
+
+    function renderDrops(drops) {
+      const mContainer = document.getElementById('m-drops-list');
+      const pcContainer = document.getElementById('pc-drops-grid');
+
+      if (drops.length === 0) {
+        const emptyHtml = `
+          <div class="py-12 text-center w-full col-span-3">
+            <div class="w-12 h-12 mx-auto rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mb-2">
+              <i data-lucide="inbox" class="w-6 h-6"></i>
+            </div>
+            <h4 class="text-xs font-bold text-slate-700">${isShowingSavedOnly ? 'No saved drops' : 'No active drops found'}</h4>
+            <p class="text-[11px] text-slate-400 mt-0.5">${isShowingSavedOnly ? 'Tap the bookmark icon on any drop to save it here.' : 'Try changing your filters or campus zone.'}</p>
+            ${isShowingSavedOnly ? `<button onclick="toggleSavedFilter()" class="mt-3 px-3 py-1.5 bg-brand-500 text-white font-bold text-xs rounded-xl">Browse All Drops</button>` : ''}
+          </div>
+        `;
+        mContainer.innerHTML = emptyHtml;
+        pcContainer.innerHTML = emptyHtml;
+        lucide.createIcons();
+        return;
+      }
+
+      // Render Mobile Drop Cards (Exact Figma UI)
+      mContainer.innerHTML = drops.map(drop => {
+        const isSaved = savedDropIds.includes(drop.id);
+        return `
+          <div onclick="selectDrop('${drop.id}')" class="bg-white p-3 rounded-2xl border border-slate-200/70 shadow-sm hover:shadow-md transition cursor-pointer active:scale-[0.99] flex gap-3.5 relative group">
+            <div class="w-24 h-24 rounded-xl overflow-hidden shrink-0 bg-slate-100 relative">
+              <img src="${drop.image_url}" alt="${drop.title}" class="w-full h-full object-cover">
+              <div class="absolute top-1 left-1 bg-black/60 backdrop-blur-sm text-[9px] font-bold text-white px-1.5 py-0.5 rounded">
+                FREE
+              </div>
+            </div>
+            <div class="flex-1 min-w-0 flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block truncate">${drop.event_name}</span>
+                  <button onclick="event.stopPropagation(); toggleBookmarkId('${drop.id}')" class="text-slate-400 hover:text-brand-600 transition p-0.5">
+                    <i data-lucide="bookmark" class="w-3.5 h-3.5 ${isSaved ? 'text-brand-600 fill-brand-600' : ''}"></i>
+                  </button>
+                </div>
+                <h4 class="text-sm font-bold text-slate-900 leading-snug truncate">${drop.title}</h4>
+                <div class="flex items-center gap-1 text-xs text-slate-500 mt-0.5">
+                  <i data-lucide="map-pin" class="w-3 h-3 text-slate-400"></i>
+                  <span class="truncate">${drop.location_name}</span>
+                </div>
+                <div class="flex items-center gap-1.5 mt-1.5">
+                  ${drop.tags.map(t => `<span class="text-[10px] font-medium bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">${t}</span>`).join('')}
+                </div>
+              </div>
+              <div class="flex items-center justify-between text-[11px] font-semibold mt-2 pt-1 border-t border-slate-100">
+                <span class="text-amber-600 flex items-center gap-1">
+                  <i data-lucide="clock" class="w-3 h-3"></i>
+                  <span>Expires in ${drop.minutes_left}m</span>
+                </span>
+                <span class="text-brand-600 font-bold">${drop.remaining_portions} ${drop.portion_type} left</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Render PC Desktop Grid Cards (Same Figma Styling)
+      pcContainer.innerHTML = drops.map(drop => {
+        const isSaved = savedDropIds.includes(drop.id);
+        return `
+          <div onclick="selectDrop('${drop.id}')" class="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl transition cursor-pointer flex flex-col group">
+            <div class="relative w-full h-44 bg-slate-100 overflow-hidden">
+              <img src="${drop.image_url}" alt="${drop.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+              <div class="absolute top-3 left-3 bg-brand-950/80 backdrop-blur text-white text-[10px] font-bold px-2.5 py-1 rounded-full border border-brand-800">
+                FREE FOOD
+              </div>
+              <button onclick="event.stopPropagation(); toggleBookmarkId('${drop.id}')" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur flex items-center justify-center text-slate-700 hover:text-brand-600 shadow transition">
+                <i data-lucide="bookmark" class="w-4 h-4 ${isSaved ? 'text-brand-600 fill-brand-600' : ''}"></i>
+              </button>
+              <div class="absolute bottom-3 right-3 bg-white/95 backdrop-blur text-slate-900 text-xs font-extrabold px-2.5 py-1 rounded-xl shadow">
+                ${drop.remaining_portions} ${drop.portion_type} left
+              </div>
+            </div>
+            <div class="p-5 flex-1 flex flex-col justify-between">
+              <div>
+                <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block truncate">${drop.event_name}</span>
+                <h4 class="text-base font-extrabold text-slate-900 mt-1 leading-snug">${drop.title}</h4>
+                <p class="text-xs text-brand-700 font-semibold mt-1">Hosted by ${drop.host}</p>
+                <div class="flex items-center gap-1.5 text-xs text-slate-500 mt-2">
+                  <i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-400"></i>
+                  <span class="truncate">${drop.location_name} • ${drop.distance}</span>
+                </div>
+                <div class="flex flex-wrap gap-1.5 mt-3">
+                  ${drop.tags.map(t => `<span class="text-[10px] font-semibold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-lg">${t}</span>`).join('')}
+                </div>
+              </div>
+              <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                <span class="text-amber-600 font-semibold flex items-center gap-1">
+                  <i data-lucide="clock" class="w-3.5 h-3.5"></i>
+                  <span>Expires in ${drop.minutes_left}m</span>
+                </span>
+                <span class="text-brand-600 font-bold group-hover:translate-x-0.5 transition flex items-center gap-1">
+                  <span>View Details</span>
+                  <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                </span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    // Select Drop
+    async function selectDrop(dropId) {
+      try {
+        const res = await fetch(`/api/drops/${dropId}`);
+        const data = await res.json();
+        selectedDropData = data.drop;
+
+        // Mobile Detail Data
+        document.getElementById('m-detail-img').src = selectedDropData.image_url;
+        document.getElementById('m-detail-event').textContent = selectedDropData.event_name;
+        document.getElementById('m-detail-title').textContent = selectedDropData.title;
+        document.getElementById('m-detail-host').textContent = `Hosted by ${selectedDropData.host}`;
+        document.getElementById('m-detail-location').textContent = selectedDropData.location_name;
+        document.getElementById('m-detail-distance').textContent = `${selectedDropData.campus_area} • ${selectedDropData.distance} (${selectedDropData.walk_time})`;
+        document.getElementById('m-detail-remaining-label').textContent = `${selectedDropData.remaining_portions} ${selectedDropData.portion_type} left`;
+        document.getElementById('m-detail-total-label').textContent = `of ${selectedDropData.total_portions} prepared`;
+        document.getElementById('m-detail-instructions').textContent = selectedDropData.pickup_instructions;
+
+        const pct = Math.round((selectedDropData.remaining_portions / selectedDropData.total_portions) * 100);
+        document.getElementById('m-detail-progress-bar').style.width = `${pct}%`;
+
+        const badgesHtml = selectedDropData.dietary_badges.map(b => `
+          <span class="px-2.5 py-1 rounded-lg bg-slate-100 flex items-center gap-1.5 font-medium">
+            <i data-lucide="check" class="w-3.5 h-3.5 text-brand-600"></i>
+            <span>${b}</span>
+          </span>
+        `).join('');
+        document.getElementById('m-detail-badges').innerHTML = badgesHtml;
+
+        // PC Detail Data
+        document.getElementById('pc-detail-img').src = selectedDropData.image_url;
+        document.getElementById('pc-detail-event').textContent = selectedDropData.event_name;
+        document.getElementById('pc-detail-title').textContent = selectedDropData.title;
+        document.getElementById('pc-detail-host').textContent = `Hosted by ${selectedDropData.host}`;
+        document.getElementById('pc-detail-location').textContent = selectedDropData.location_name;
+        document.getElementById('pc-detail-distance').textContent = `${selectedDropData.distance} (${selectedDropData.walk_time})`;
+        document.getElementById('pc-detail-remaining-label').textContent = `${selectedDropData.remaining_portions} ${selectedDropData.portion_type} left`;
+        document.getElementById('pc-detail-total-label').textContent = `of ${selectedDropData.total_portions} prepared`;
+        document.getElementById('pc-detail-instructions').textContent = selectedDropData.pickup_instructions;
+        document.getElementById('pc-detail-progress-bar').style.width = `${pct}%`;
+        document.getElementById('pc-detail-badges').innerHTML = badgesHtml;
+
+        // Sync bookmark state in detail screen
+        const isSaved = savedDropIds.includes(selectedDropData.id);
+        const mBookmarkBtn = document.getElementById('m-detail-bookmark-btn');
+        const pcBookmarkBtn = document.getElementById('pc-detail-bookmark-btn');
+        if (isSaved) {
+          mBookmarkBtn.classList.add('text-brand-600');
+          pcBookmarkBtn.classList.add('text-brand-600');
+        } else {
+          mBookmarkBtn.classList.remove('text-brand-600');
+          pcBookmarkBtn.classList.remove('text-brand-600');
+        }
+
+        // CTA State
+        const mBtn = document.getElementById('m-claim-btn');
+        const mText = document.getElementById('m-claim-btn-text');
+        const pcBtn = document.getElementById('pc-claim-btn');
+        const pcText = document.getElementById('pc-claim-btn-text');
+
+        if (selectedDropData.remaining_portions <= 0) {
+          mBtn.disabled = true;
+          pcBtn.disabled = true;
+          mText.textContent = 'All Portions Claimed';
+          pcText.textContent = 'All Portions Claimed';
+        } else {
+          mBtn.disabled = false;
+          pcBtn.disabled = false;
+          const unit = selectedDropData.portion_type === 'boxes' ? 'Box' : selectedDropData.portion_type === 'bowls' ? 'Bowl' : 'Portion';
+          const label = `Claim 1 ${unit} (Hold for 20m)`;
+          mText.textContent = label;
+          pcText.textContent = label;
+        }
+
+        navigateTo('detail');
+      } catch (err) {
+        console.error('Error opening drop:', err);
+      }
+    }
+
+    // Execute Claim
+    async function executeClaim() {
+      if (!selectedDropData) return;
+      try {
+        const res = await fetch(`/api/drops/${selectedDropData.id}/claim`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: 'user_alex' })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to claim');
+
+        playChime('success');
+        showToast('Portion reserved! Your 20-minute pass is ready.');
+        await fetchActiveReservation();
+        await fetchUserProfile();
+        await fetchDrops();
+        navigateTo('pass');
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    // Complete Pickup
+    async function markPickupCompleted() {
+      try {
+        let resId = activeReservationData ? activeReservationData.id : null;
+        if (!resId) {
+          await fetchActiveReservation();
+          resId = activeReservationData ? activeReservationData.id : 'res_default';
+        }
+
+        const res = await fetch(`/api/reservations/${resId}/pickup`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: 'user_alex' })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+
+        playChime('pickup');
+        confetti({
+          particleCount: 120,
+          spread: 80,
+          origin: { y: 0.6 }
+        });
+
+        showToast('🎉 Meal picked up! +1 Meal Rescued & +1.3kg CO₂ saved.');
+        await fetchActiveReservation();
+        await fetchUserProfile();
+        await fetchDrops();
+        navigateTo('impact');
+      } catch (err) {
+        console.error('Error completing pickup:', err);
+        showToast(err.message || 'Error completing pickup');
+      }
+    }
+
+    // Cancel Active Reservation
+    async function cancelActiveReservation() {
+      try {
+        let resId = activeReservationData ? activeReservationData.id : null;
+        if (!resId) {
+          await fetchActiveReservation();
+          resId = activeReservationData ? activeReservationData.id : 'res_default';
+        }
+
+        const res = await fetch(`/api/reservations/${resId}/cancel`, {
+          method: 'POST'
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+
+        showToast('Reservation cancelled. Portion released back to campus feed.');
+        clearInterval(timerInterval);
+        activeReservationData = null;
+        await fetchActiveReservation();
+        await fetchDrops();
+        navigateTo('home');
+      } catch (err) {
+        console.error('Error cancelling reservation:', err);
+        showToast(err.message || 'Error cancelling reservation');
+      }
+    }
+
+    // Countdown Timer Sync
+    function startCountdown(seconds) {
+      clearInterval(timerInterval);
+      let remaining = seconds;
+      const mDisplay = document.getElementById('m-countdown-timer');
+      const pcDisplay = document.getElementById('pc-countdown-timer');
+      const widgetTimer = document.getElementById('pc-pass-widget-timer');
+
+      function tick() {
+        const mins = Math.floor(remaining / 60);
+        const secs = remaining % 60;
+        const timeStr = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        
+        if (mDisplay) mDisplay.textContent = timeStr;
+        if (pcDisplay) pcDisplay.textContent = timeStr;
+        if (widgetTimer) widgetTimer.textContent = `${timeStr} remaining`;
+
+        if (remaining <= 0) {
+          clearInterval(timerInterval);
+          if (mDisplay) mDisplay.textContent = "EXPIRED";
+          if (pcDisplay) pcDisplay.textContent = "EXPIRED";
+          fetchActiveReservation();
+        }
+        remaining--;
+      }
+      tick();
+      timerInterval = setInterval(tick, 1000);
+    }
+
+    // Bookmarking & Saved Filter
+    function toggleBookmarkId(id) {
+      if (savedDropIds.includes(id)) {
+        savedDropIds = savedDropIds.filter(x => x !== id);
+        showToast('Removed from saved');
+      } else {
+        savedDropIds.push(id);
+        showToast('Saved to your bookmarks');
+      }
+      localStorage.setItem('mealmatch_saved', JSON.stringify(savedDropIds));
+      fetchDrops();
+    }
+
+    function toggleCurrentBookmark() {
+      if (!selectedDropData) return;
+      toggleBookmarkId(selectedDropData.id);
+    }
+
+    function toggleSavedFilter() {
+      isShowingSavedOnly = !isShowingSavedOnly;
+      const mHeading = document.getElementById('m-section-heading');
+      const pcHeading = document.getElementById('pc-section-heading');
+      
+      if (isShowingSavedOnly) {
+        mHeading.textContent = `Saved Drops (${savedDropIds.length})`;
+        pcHeading.textContent = `Your Saved Drops (${savedDropIds.length})`;
+        showToast(`Showing ${savedDropIds.length} saved drops`);
+      } else {
+        mHeading.textContent = 'Fresh around you';
+        pcHeading.textContent = 'Available Food Drops Around Campus';
+      }
+      fetchDrops();
+      navigateTo('home');
+    }
+
+    // Sort Menu
+    function toggleSortMenu(menuId) {
+      const menu = document.getElementById(menuId);
+      menu.classList.toggle('hidden');
+    }
+
+    function applySort(sortKey, sortLabel) {
+      currentSort = sortKey;
+      document.getElementById('m-sort-label').textContent = sortLabel;
+      document.getElementById('pc-sort-label').textContent = sortLabel;
+      document.getElementById('m-sort-menu').classList.add('hidden');
+      document.getElementById('pc-sort-menu').classList.add('hidden');
+      fetchDrops();
+    }
+
+    // Campus Zone Selector
+    function openCampusModal() {
+      document.getElementById('campus-modal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+    function closeCampusModal() {
+      document.getElementById('campus-modal').classList.add('hidden');
+    }
+    function selectCampusZone(zone) {
+      currentCampus = zone;
+      const label = zone === 'All' ? 'All Berkeley Campus' : `${zone} • UC Berkeley`;
+      document.getElementById('header-campus-label').textContent = label;
+      document.getElementById('m-campus-label').textContent = label;
+      document.getElementById('pc-campus-label').textContent = label;
+      closeCampusModal();
+      showToast(`Location set to ${zone}`);
+      fetchDrops();
+    }
+
+    // Directions Modal
+    function openDirectionsModal() {
+      document.getElementById('directions-modal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+    function closeDirectionsModal() {
+      document.getElementById('directions-modal').classList.add('hidden');
+    }
+
+    // Settings Modal
+    function openSettingsModal() {
+      document.getElementById('settings-modal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+    function closeSettingsModal() {
+      document.getElementById('settings-modal').classList.add('hidden');
+    }
+
+    // Share Drop
+    function shareDrop() {
+      if (navigator.share && selectedDropData) {
+        navigator.share({
+          title: `MealMatch: ${selectedDropData.title}`,
+          text: `Free leftover food at ${selectedDropData.location_name}!`,
+          url: window.location.href
+        }).catch(() => {});
+      } else {
+        navigator.clipboard.writeText(window.location.href);
+        showToast('Link copied to clipboard!');
+      }
+    }
+
+    // Filter Chips
+    function handleFilter(tag, chip) {
+      currentFilter = tag;
+      isShowingSavedOnly = false;
+      document.querySelectorAll('.m-filter-chip, .pc-filter-chip').forEach(c => {
+        if (c.textContent.trim().toLowerCase().includes(tag.toLowerCase()) || (tag === 'All' && c.textContent.includes('All'))) {
+          c.classList.add('bg-slate-900', 'text-white');
+          c.classList.remove('bg-white', 'text-slate-600', 'bg-slate-900/60', 'text-slate-300');
+        } else {
+          c.classList.remove('bg-slate-900', 'text-white');
+          c.classList.add('bg-white', 'text-slate-600');
+        }
+      });
+      fetchDrops();
+    }
+
+    let searchTimeout = null;
+    function handleSearch(q) {
+      clearTimeout(searchTimeout);
+      searchQuery = q.trim();
+      searchTimeout = setTimeout(fetchDrops, 250);
+    }
+
+    // Modals: Post Drop
+    function openPostModal() {
+      document.getElementById('post-modal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+    function closePostModal() {
+      document.getElementById('post-modal').classList.add('hidden');
+    }
+
+    async function submitPostDrop(e) {
+      e.preventDefault();
+      const tags = document.getElementById('post-tags').value.split(',').map(s => s.trim()).filter(Boolean);
+      const payload = {
+        event_name: document.getElementById('post-event').value,
+        title: document.getElementById('post-title').value,
+        host: document.getElementById('post-host').value,
+        total_portions: parseInt(document.getElementById('post-portions').value, 10),
+        location_name: document.getElementById('post-location').value,
+        campus_area: document.getElementById('post-area').value,
+        tags: tags.length ? tags : ['Hot Meals'],
+        dietary_badges: tags.length ? tags : ['Fresh Drop'],
+        pickup_instructions: document.getElementById('post-instructions').value || 'Enter through front doors, take box from host.',
+        image_url: '/assets/sandwiches.jpg'
+      };
+
+      try {
+        const res = await fetch('/api/drops', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+
+        closePostModal();
+        playChime('success');
+        showToast('New food drop published!');
+        await fetchDrops();
+        navigateTo('home');
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    // On Load
+    window.addEventListener('DOMContentLoaded', async () => {
+      const initialHash = window.location.hash.replace('#', '');
+      if (initialHash && ['home', 'detail', 'pass', 'impact'].includes(initialHash)) {
+        currentScreen = initialHash;
+      }
+
+      if (window.innerWidth >= 1024) {
+        setAppMode('pc');
+      } else {
+        setAppMode('mobile');
+      }
+
+      lucide.createIcons();
+      await fetchDrops();
+      await fetchUserProfile();
+      await fetchActiveReservation();
+
+      if (currentScreen === 'detail' && !selectedDropData && allDrops.length > 0) {
+        await selectDrop(allDrops[0].id);
+      } else {
+        navigateTo(currentScreen);
+      }
+    });
+
+    window.addEventListener('hashchange', () => {
+      const hash = window.location.hash.replace('#', '');
+      if (hash && ['home', 'detail', 'pass', 'impact'].includes(hash) && hash !== currentScreen) {
+        navigateTo(hash);
+      }
+    });
+  </script>
+</body>
+</html>
