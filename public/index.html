@@ -183,7 +183,7 @@
 </head>
 <body class="bg-slate-900 text-slate-800 antialiased font-sans min-h-screen flex flex-col items-center justify-start select-none">
 
-  <!-- TOP BAR: Product Brand & View Mode Switcher (PC / Mobile) -->
+  <!-- TOP BAR: Product Brand -->
   <header class="w-full bg-slate-900/95 backdrop-blur border-b border-slate-800 py-2.5 px-4 sm:px-8 flex items-center justify-between text-white shrink-0 z-50">
     <div class="flex items-center gap-2.5">
       <div onclick="navigateTo('home')" class="w-8 h-8 rounded-xl bg-brand-500 flex items-center justify-center text-white shadow-md shadow-brand-500/30 cursor-pointer active:scale-95 transition">
@@ -198,19 +198,7 @@
       </div>
     </div>
 
-    <!-- Mode Switcher: Mobile vs PC Desktop -->
     <div class="flex items-center gap-3">
-      <div class="bg-slate-950 p-1 rounded-xl border border-slate-800 flex items-center gap-1 text-xs font-semibold">
-        <button id="btn-mode-mobile" onclick="setAppMode('mobile')" class="px-3 py-1.5 rounded-lg bg-brand-600 text-white transition flex items-center gap-1.5 shadow-sm">
-          <i data-lucide="smartphone" class="w-3.5 h-3.5"></i>
-          <span>Mobile</span>
-        </button>
-        <button id="btn-mode-pc" onclick="setAppMode('pc')" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center gap-1.5">
-          <i data-lucide="monitor" class="w-3.5 h-3.5"></i>
-          <span>PC Desktop</span>
-        </button>
-      </div>
-
       <button onclick="openPostModal()" class="hidden sm:flex px-3.5 py-1.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold transition items-center gap-1.5 shadow-md shadow-brand-500/25">
         <i data-lucide="plus" class="w-4 h-4 stroke-[2.5]"></i>
         <span>Post Drop</span>
@@ -228,10 +216,8 @@
     </div>
   </div>
 
-  <!-- ========================================================================= -->
-  <!-- 1. MOBILE APP MODE (iPhone Simulator Frame on Desktop, Native on Phones)  -->
-  <!-- ========================================================================= -->
-  <div id="mobile-wrapper" class="w-full flex justify-center items-start py-2 sm:py-6 flex-1">
+  <!-- Legacy mobile markup is retained for shared data bindings, but is not shown. -->
+  <div id="mobile-wrapper" class="hidden" aria-hidden="true">
     
     <div id="phone-container" class="relative w-full sm:w-[393px] h-[100vh] sm:h-[844px] bg-white sm:rounded-[48px] sm:shadow-2xl sm:border-[9px] sm:border-slate-800 overflow-hidden flex flex-col ring-1 ring-slate-800">
       
@@ -674,10 +660,8 @@
 
   </div>
 
-  <!-- ========================================================================= -->
-  <!-- 2. PC DESKTOP MODE (Full-width Desktop UI with Same Exact Figma Styling)  -->
-  <!-- ========================================================================= -->
-  <div id="pc-wrapper" class="hidden w-full max-w-6xl flex-1 px-4 sm:px-8 py-6">
+  <!-- Desktop-only application -->
+  <div id="pc-wrapper" class="w-full flex-1 px-4 sm:px-8 py-6">
     
     <!-- Desktop Secondary Subheader Navigation -->
     <div class="flex items-center justify-between pb-4 border-b border-slate-800 text-white mb-6">
@@ -1335,7 +1319,6 @@
   <!-- APPLICATION JAVASCRIPT LOGIC -->
   <script>
     // State
-    let appMode = 'mobile';
     let currentScreen = 'home';
     let allDrops = [];
     let selectedDropData = null;
@@ -1399,32 +1382,6 @@
     }
     setInterval(updateClock, 1000);
     updateClock();
-
-    // Mode Switcher (Mobile vs PC Desktop)
-    function setAppMode(mode) {
-      appMode = mode;
-      const mWrap = document.getElementById('mobile-wrapper');
-      const pWrap = document.getElementById('pc-wrapper');
-      const btnM = document.getElementById('btn-mode-mobile');
-      const btnP = document.getElementById('btn-mode-pc');
-
-      if (mode === 'pc') {
-        mWrap.classList.add('hidden');
-        pWrap.classList.remove('hidden');
-        btnP.classList.add('bg-brand-600', 'text-white');
-        btnP.classList.remove('text-slate-400');
-        btnM.classList.remove('bg-brand-600', 'text-white');
-        btnM.classList.add('text-slate-400');
-      } else {
-        pWrap.classList.add('hidden');
-        mWrap.classList.remove('hidden');
-        btnM.classList.add('bg-brand-600', 'text-white');
-        btnM.classList.remove('text-slate-400');
-        btnP.classList.remove('bg-brand-600', 'text-white');
-        btnP.classList.add('text-slate-400');
-      }
-      navigateTo(currentScreen);
-    }
 
     // Navigation
     function navigateTo(screenKey) {
@@ -2101,12 +2058,6 @@
       const initialHash = window.location.hash.replace('#', '');
       if (initialHash && ['home', 'detail', 'pass', 'impact'].includes(initialHash)) {
         currentScreen = initialHash;
-      }
-
-      if (window.innerWidth >= 1024) {
-        setAppMode('pc');
-      } else {
-        setAppMode('mobile');
       }
 
       lucide.createIcons();
