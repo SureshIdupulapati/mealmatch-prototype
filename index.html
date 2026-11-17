@@ -42,12 +42,122 @@
     }
   </script>
   <style>
+    :root {
+      --market-paper: #f8f5eb;
+      --market-card: #fffdf6;
+      --market-ink: #29382e;
+      --market-muted: #778170;
+      --market-olive: #344a37;
+      --market-sage: #e9eddb;
+      --market-coral: #ef7049;
+      --market-line: #e5e2d5;
+    }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     .fade-enter { animation: fadeIn 0.2s ease-out; }
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(4px); }
       to { opacity: 1; transform: translateY(0); }
+    }
+    .market-status-bar { background: var(--market-paper) !important; }
+    .market-home { background: var(--market-paper); color: var(--market-ink); }
+    .market-mobile-header { background: var(--market-paper); border-color: var(--market-line); }
+    .market-feed-kicker { display: flex; align-items: center; gap: 8px; color: #79836f; font-size: 10px; font-weight: 800; letter-spacing: .22em; text-transform: uppercase; }
+    .market-feed-mark { display: inline-flex; width: 32px; height: 32px; align-items: center; justify-content: center; border-radius: 12px; background: var(--market-coral); color: white; }
+    .market-home-title { margin-top: 8px; color: #25332b; font-size: 27px; font-weight: 800; line-height: 1; letter-spacing: -.06em; }
+    .market-campus-link { color: #56704f; font-size: 11px; font-weight: 700; }
+    .market-impact-link { border: 1px solid #d9ddc9; background: #e9eddc; color: #55714b; }
+    .market-search { border: 1px solid #e5e3d6; border-radius: 17px; background: #fffdf6; box-shadow: 0 3px 12px rgba(56,60,39,.04); }
+    .market-search input { color: var(--market-ink); }
+    .market-search input::placeholder { color: #9da397; }
+    .market-filter-chip { border: 1px solid #dedfce; background: #fdfbf3; color: #687262; }
+    .market-filter-chip.market-active { border-color: var(--market-olive); background: var(--market-olive) !important; color: #fffdf6 !important; }
+    .market-rescue-note { border: 0; border-radius: 15px; background: var(--market-sage); text-align: left; }
+    .market-rescue-icon { background: #d2ddba; color: #536c47; }
+    .market-rescue-title { color: #394a35; }
+    .market-rescue-copy { color: #74816b; }
+    .market-today { background: #fffdf6; color: #647655; }
+    .market-section-kicker { color: #e26b47; font-size: 9px; font-weight: 800; letter-spacing: .2em; text-transform: uppercase; }
+    .market-section-title { color: var(--market-ink); font-size: 20px; font-weight: 800; line-height: 1.2; letter-spacing: -.05em; }
+    .market-sort-control { color: #687262; font-size: 10px; font-weight: 700; }
+    .market-sort-control select { max-width: 105px; appearance: none; background: transparent; text-align: right; outline: none; }
+    .market-sort-control i { color: var(--market-coral); }
+    .market-sort-menu { border-color: var(--market-line); background: var(--market-card); }
+    .market-drop-track { display: flex; gap: 12px; overflow-x: auto; padding: 12px 20px 8px; scroll-snap-type: x mandatory; }
+    .market-drop-card { flex: 0 0 286px; overflow: hidden; border: 1px solid var(--market-line); border-radius: 22px; background: var(--market-card); box-shadow: 0 7px 22px rgba(62,61,43,.08); scroll-snap-align: start; transition: transform .2s ease, box-shadow .2s ease; }
+    .market-drop-card:hover { transform: translateY(-2px); box-shadow: 0 11px 28px rgba(62,61,43,.12); }
+    .market-drop-photo { position: relative; height: 168px; overflow: hidden; background: #e8e4d5; }
+    .market-drop-photo img { height: 100%; width: 100%; object-fit: cover; transition: transform .35s ease; }
+    .market-drop-card:hover .market-drop-photo img { transform: scale(1.04); }
+    .market-photo-shade { position: absolute; inset: 0; background: linear-gradient(to top, rgba(20,34,25,.55), transparent 58%, rgba(20,34,25,.1)); pointer-events: none; }
+    .market-free-label { position: absolute; top: 12px; left: 12px; border-radius: 999px; background: #fff9e9; padding: 4px 10px; color: #4e6742; font-size: 9px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+    .market-bookmark { position: absolute; top: 10px; right: 10px; display: flex; height: 32px; width: 32px; align-items: center; justify-content: center; border-radius: 50%; background: rgba(255,253,246,.93); color: #405143; backdrop-filter: blur(6px); }
+    .market-bookmark.is-saved { background: #f9edd7; color: #e16b47; }
+    .market-freshness { position: absolute; bottom: 12px; left: 12px; display: flex; align-items: center; gap: 6px; border-radius: 999px; background: rgba(248,243,231,.96); padding: 6px 10px; color: #48543d; font-size: 10px; font-weight: 800; }
+    .market-freshness i { color: #e16b47; }
+    .market-portions { position: absolute; right: 12px; bottom: 12px; border-radius: 999px; background: var(--market-coral); padding: 6px 10px; color: white; font-size: 10px; font-weight: 800; }
+    .market-drop-content { padding: 13px 14px 12px; }
+    .market-drop-event { overflow: hidden; color: #e16b47; font-size: 9px; font-weight: 800; letter-spacing: .15em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+    .market-drop-title { margin-top: 4px; color: var(--market-ink); font-size: 16px; font-weight: 800; line-height: 1.2; letter-spacing: -.04em; }
+    .market-drop-location { display: flex; align-items: center; gap: 5px; margin-top: 8px; color: #758071; font-size: 10px; font-weight: 600; }
+    .market-drop-location span:first-of-type { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .market-drop-distance { margin-left: auto; flex: 0 0 auto; color: #4e6742; }
+    .market-drop-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 11px; border-top: 1px solid #efede3; padding-top: 9px; }
+    .market-drop-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+    .market-drop-tag { border-radius: 999px; background: #eef0e3; padding: 4px 9px; color: #5f7055; font-size: 9px; font-weight: 700; }
+    .market-portion-type { color: #87907e; font-size: 9px; font-weight: 700; }
+    .market-empty { width: 100%; border: 1px dashed #d9ddca; border-radius: 20px; background: var(--market-card); padding: 36px 20px; text-align: center; }
+    .market-empty-title { color: #394a35; font-size: 13px; font-weight: 800; }
+    .market-empty-copy { margin-top: 4px; color: #87907e; font-size: 11px; }
+    .market-empty button { margin-top: 12px; color: #df6e49; font-size: 11px; font-weight: 800; }
+    .market-bottom-nav { border-color: var(--market-line) !important; background: var(--market-card) !important; }
+    #phone-container:has(#m-screen-home:not(.hidden)) .market-bottom-nav .m-nav-tab[data-tab="home"] { color: var(--market-coral) !important; }
+    #phone-container:has(#m-screen-home:not(.hidden)) .market-bottom-nav .m-nav-tab[data-tab="home"] .nav-dot { background: var(--market-coral) !important; }
+    .market-bottom-nav .m-nav-tab[data-tab="post"] > div { background: var(--market-coral) !important; }
+    .market-pc-feed { border-radius: 28px; background: var(--market-paper); padding: 24px; color: var(--market-ink); }
+    .market-pc-hero { border: 1px solid var(--market-line) !important; background: var(--market-sage) !important; box-shadow: 0 8px 24px rgba(62,61,43,.06) !important; }
+    .market-pc-hero .market-pc-eyebrow { border-color: #d5ddc6; background: #f7f7ed; color: #667b58; }
+    .market-pc-hero h2 { color: var(--market-ink) !important; }
+    .market-pc-hero p { color: #74816b !important; }
+    .market-pc-hero .market-pc-primary { background: var(--market-coral); color: white; }
+    .market-pc-hero .market-pc-secondary { border-color: #d4dcc7; background: rgba(255,253,246,.62); color: #405143; }
+    .market-pc-pass { border-color: var(--market-line) !important; background: var(--market-card) !important; color: var(--market-ink) !important; }
+    .market-pc-pass .market-pc-pass-heading { border-color: #efede3 !important; color: #87907e !important; }
+    .market-pc-pass h4 { color: var(--market-ink) !important; }
+    .market-pc-pass p { color: #758071 !important; }
+    .market-pc-pass button:first-of-type { background: var(--market-coral) !important; color: white !important; }
+    .market-pc-pass button:last-of-type { background: #eef0e3 !important; color: #405143 !important; }
+    .market-pc-filter-bar { border-color: var(--market-line) !important; background: var(--market-card) !important; }
+    .market-pc-filter-bar .market-filter-chip { border-color: #dedfce; background: #fdfbf3; color: #687262; }
+    .market-pc-filter-bar .market-filter-chip.market-active { border-color: var(--market-olive); background: var(--market-olive) !important; color: #fffdf6 !important; }
+    .market-pc-filter-bar button[onclick^="toggleSortMenu"] { border-color: var(--market-line) !important; background: #f7f5ed !important; color: var(--market-ink) !important; }
+    .market-pc-filter-bar button[onclick^="toggleSortMenu"] i { color: #758071 !important; }
+    .market-pc-filter-bar #pc-sort-menu { border-color: var(--market-line); background: var(--market-card); }
+    .market-pc-filter-bar #pc-sort-menu button { color: var(--market-ink); }
+    .market-pc-search { border-color: var(--market-line) !important; background: #f7f5ed !important; color: var(--market-ink) !important; }
+    .market-pc-search::placeholder { color: #929989 !important; }
+    .market-pc-heading { color: var(--market-ink) !important; }
+    .market-pc-grid { gap: 18px !important; }
+    .market-pc-card { overflow: hidden; border: 1px solid var(--market-line); border-radius: 22px; background: var(--market-card); box-shadow: 0 7px 22px rgba(62,61,43,.07); transition: transform .2s ease, box-shadow .2s ease; }
+    .market-pc-card:hover { transform: translateY(-3px); box-shadow: 0 12px 28px rgba(62,61,43,.12); }
+    .market-pc-card-photo { position: relative; height: 190px; overflow: hidden; background: #e8e4d5; }
+    .market-pc-card-photo img { height: 100%; width: 100%; object-fit: cover; transition: transform .35s ease; }
+    .market-pc-card:hover .market-pc-card-photo img { transform: scale(1.04); }
+    .market-pc-card-photo .market-free-label { top: 13px; left: 13px; }
+    .market-pc-card-photo .market-portions { font-size: 11px; }
+    .market-pc-card-content { display: flex; min-height: 210px; flex: 1; flex-direction: column; justify-content: space-between; padding: 17px; }
+    .market-pc-card-content .market-drop-title { font-size: 19px; }
+    .market-pc-host { margin-top: 5px; color: #718064; font-size: 11px; font-weight: 700; }
+    .market-pc-card-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; border-top: 1px solid #efede3; padding-top: 12px; }
+    .market-pc-expiry { display: flex; align-items: center; gap: 6px; color: #bc6a45; font-size: 11px; font-weight: 700; }
+    .market-pc-details-link { display: flex; align-items: center; gap: 4px; color: #55714b; font-size: 11px; font-weight: 800; }
+    @media (max-width: 360px) {
+      .market-drop-card { flex-basis: 270px; }
+      .market-drop-track { padding-right: 16px; padding-left: 16px; }
+    }
+    @media (max-width: 639px) {
+      #mobile-wrapper { padding-top: 0 !important; padding-bottom: 0 !important; }
+      #phone-container { height: calc(100dvh - 82px) !important; }
     }
   </style>
 </head>
@@ -106,7 +216,7 @@
     <div id="phone-container" class="relative w-full sm:w-[393px] h-[100vh] sm:h-[844px] bg-white sm:rounded-[48px] sm:shadow-2xl sm:border-[9px] sm:border-slate-800 overflow-hidden flex flex-col ring-1 ring-slate-800">
       
       <!-- iOS Status Bar & Dynamic Island -->
-      <div class="relative z-50 w-full pt-3 px-7 flex items-center justify-between text-[14px] font-semibold text-slate-900 bg-white/95 backdrop-blur shrink-0 select-none">
+      <div class="market-status-bar relative z-50 w-full pt-3 px-7 flex items-center justify-between text-[14px] font-semibold text-slate-900 bg-white/95 backdrop-blur shrink-0 select-none">
         <span id="ios-time">9:41</span>
         
         <div class="hidden sm:flex absolute left-1/2 -translate-x-1/2 top-2.5 w-28 h-7 bg-black rounded-full items-center justify-end px-2.5 gap-2">
@@ -125,71 +235,76 @@
       <div id="mobile-viewport" class="relative flex-1 w-full overflow-y-auto overflow-x-hidden no-scrollbar bg-slate-50">
         
         <!-- SCREEN 1: HOME FEED -->
-        <div id="m-screen-home" class="fade-enter w-full min-h-full pb-24">
+        <div id="m-screen-home" class="market-home fade-enter w-full min-h-full pb-24">
           <!-- Top Header -->
-          <div class="p-4 bg-white border-b border-slate-100">
+          <div class="market-mobile-header p-4 border-b">
             <div class="flex items-center justify-between">
               <div>
-                <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight">MealMatch</h2>
-                <div onclick="openCampusModal()" class="flex items-center gap-1 text-xs font-semibold text-brand-600 mt-0.5 cursor-pointer hover:underline">
+                <div class="market-feed-kicker">
+                  <span class="market-feed-mark"><i data-lucide="leaf" class="w-[17px] h-[17px]"></i></span>
+                  <span>Berkeley Market</span>
+                </div>
+                <h2 class="market-home-title">MealMatch</h2>
+                <div onclick="openCampusModal()" class="market-campus-link flex items-center gap-1.5 mt-2 cursor-pointer hover:underline">
                   <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
                   <span id="m-campus-label">North Campus • UC Berkeley</span>
-                  <i data-lucide="chevron-down" class="w-3 h-3 text-brand-500"></i>
+                  <i data-lucide="chevron-down" class="w-3 h-3"></i>
                 </div>
               </div>
-              <div onclick="navigateTo('impact')" class="w-10 h-10 rounded-full bg-brand-500 flex items-center justify-center text-white shadow-md shadow-brand-500/20 cursor-pointer active:scale-95 transition">
+              <div onclick="navigateTo('impact')" class="market-impact-link w-10 h-10 rounded-full flex items-center justify-center cursor-pointer active:scale-95 transition">
                 <i data-lucide="leaf" class="w-5 h-5"></i>
               </div>
             </div>
 
             <!-- Search Bar -->
-            <div class="mt-3.5 relative">
+            <div class="market-search mt-4 relative flex items-center gap-2 px-3.5 py-3">
               <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-              <input id="m-search-input" type="text" placeholder="Search food, events or places" oninput="handleSearch(this.value)" class="w-full bg-slate-100 text-sm pl-10 pr-10 py-2.5 rounded-full border border-slate-200/80 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition text-slate-800 placeholder-slate-400 font-medium">
+              <input id="m-search-input" type="text" placeholder="Find something delicious" oninput="handleSearch(this.value)" class="w-full bg-transparent text-xs pl-10 pr-10 py-1 focus:outline-none transition font-semibold">
               <button onclick="openSortDropdown()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                <i data-lucide="sliders-horizontal" class="w-4 h-4"></i>
+                <i data-lucide="sliders-horizontal" class="w-4 h-4 text-[#ef7049]"></i>
               </button>
             </div>
 
             <!-- Filter Chips -->
             <div class="flex items-center gap-2 mt-3.5 overflow-x-auto no-scrollbar py-0.5 text-xs font-semibold">
-              <button onclick="handleFilter('All', this)" class="m-filter-chip px-3.5 py-1.5 rounded-full bg-slate-900 text-white shrink-0 shadow-sm transition">All</button>
-              <button onclick="handleFilter('Vegan', this)" class="m-filter-chip px-3.5 py-1.5 rounded-full bg-white text-slate-600 border border-slate-200 shrink-0 hover:bg-slate-50 transition">Vegan</button>
-              <button onclick="handleFilter('Halal', this)" class="m-filter-chip px-3.5 py-1.5 rounded-full bg-white text-slate-600 border border-slate-200 shrink-0 hover:bg-slate-50 transition">Halal</button>
-              <button onclick="handleFilter('Hot Meals', this)" class="m-filter-chip px-3.5 py-1.5 rounded-full bg-white text-slate-600 border border-slate-200 shrink-0 hover:bg-slate-50 transition">Hot Meals</button>
-              <button onclick="handleFilter('Snacks', this)" class="m-filter-chip px-3.5 py-1.5 rounded-full bg-white text-slate-600 border border-slate-200 shrink-0 hover:bg-slate-50 transition">Snacks</button>
+              <button onclick="handleFilter('All', this)" class="m-filter-chip market-filter-chip market-active px-3.5 py-2 rounded-full shrink-0 transition">All</button>
+              <button onclick="handleFilter('Vegan', this)" class="m-filter-chip market-filter-chip px-3.5 py-2 rounded-full shrink-0 transition">Vegan</button>
+              <button onclick="handleFilter('Halal', this)" class="m-filter-chip market-filter-chip px-3.5 py-2 rounded-full shrink-0 transition">Halal</button>
+              <button onclick="handleFilter('Hot Meals', this)" class="m-filter-chip market-filter-chip px-3.5 py-2 rounded-full shrink-0 transition">Hot Meals</button>
+              <button onclick="handleFilter('Snacks', this)" class="m-filter-chip market-filter-chip px-3.5 py-2 rounded-full shrink-0 transition">Snacks</button>
             </div>
           </div>
 
-          <!-- Hero Promo Banner -->
-          <div class="px-4 mt-4">
-            <div onclick="selectDrop('drop_1')" class="bg-gradient-to-br from-brand-900 to-brand-950 p-4 rounded-2xl text-white shadow-lg shadow-brand-900/20 relative overflow-hidden cursor-pointer active:scale-[0.99] transition group">
-              <div class="absolute -right-6 -bottom-6 w-28 h-28 bg-brand-500/20 rounded-full blur-2xl"></div>
-              
-              <div class="flex items-center justify-between">
+          <!-- Fresh food rescue count -->
+          <div class="px-5 pt-1">
+            <button type="button" onclick="selectDrop('drop_1')" class="market-rescue-note w-full flex items-center justify-between px-3.5 py-3 cursor-pointer">
+              <div class="flex items-center gap-2.5">
+                <span class="market-rescue-icon w-8 h-8 rounded-full flex items-center justify-center">
+                  <i data-lucide="check" class="w-4 h-4"></i>
+                </span>
                 <div>
-                  <span class="text-[10px] font-extrabold tracking-widest text-brand-300 uppercase bg-brand-800/80 px-2 py-0.5 rounded-full border border-brand-700/50">CAMPUS FOOD RESCUE</span>
-                  <h3 class="text-lg font-bold text-white mt-1.5 leading-snug"><span id="m-banner-count">3</span> Active Drops Nearby</h3>
-                  <p class="text-xs text-brand-200/90 mt-0.5">Good food. Less waste. All yours.</p>
-                </div>
-                <div class="w-9 h-9 rounded-full bg-brand-500 group-hover:bg-brand-400 flex items-center justify-center text-white shrink-0 shadow transition">
-                  <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                  <p class="market-rescue-title text-xs font-extrabold"><span id="m-banner-count">3</span> fresh finds nearby</p>
+                  <p class="market-rescue-copy text-[10px] mt-0.5">Rescued from campus events</p>
                 </div>
               </div>
-            </div>
+              <span class="market-today rounded-full px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-wider">Today</span>
+            </button>
           </div>
 
-          <!-- Section Header with Interactive Sort Dropdown -->
-          <div class="px-4 mt-5 flex items-center justify-between relative">
-            <h3 id="m-section-heading" class="text-sm font-bold text-slate-900 tracking-tight">Fresh around you</h3>
+          <!-- Food-first drop collection -->
+          <div class="px-5 mt-5 flex items-end justify-between relative">
+            <div>
+              <p class="market-section-kicker">The fresh picks</p>
+              <h3 id="m-section-heading" class="market-section-title mt-1">Good things, going fast</h3>
+            </div>
             
-            <div class="relative">
-              <button onclick="toggleSortMenu('m-sort-menu')" class="text-xs font-semibold text-slate-600 hover:text-slate-900 flex items-center gap-1 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200 transition">
+            <div class="relative market-sort-control mb-0.5">
+              <button onclick="toggleSortMenu('m-sort-menu')" class="flex items-center gap-1 transition">
                 <span id="m-sort-label">Closest first</span>
                 <i data-lucide="chevron-down" class="w-3 h-3"></i>
               </button>
 
-              <div id="m-sort-menu" class="hidden absolute right-0 mt-1 w-36 bg-white border border-slate-200 rounded-xl shadow-xl py-1 text-xs font-semibold z-30">
+              <div id="m-sort-menu" class="market-sort-menu hidden absolute right-0 mt-1 w-36 border rounded-xl shadow-xl py-1 text-xs font-semibold z-30">
                 <button onclick="applySort('closest', 'Closest first')" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700">Closest first</button>
                 <button onclick="applySort('expiring', 'Expiring soonest')" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700">Expiring soonest</button>
                 <button onclick="applySort('portions', 'Most portions')" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700">Most portions</button>
@@ -198,7 +313,8 @@
           </div>
 
           <!-- Dynamic Drops Card List -->
-          <div id="m-drops-list" class="px-4 mt-3 space-y-3"></div>
+          <div id="m-drops-list" class="market-drop-track mt-1"></div>
+          <p id="m-market-count" class="px-5 pt-1 text-[9px] font-semibold uppercase tracking-[0.17em] text-[#929989]"></p>
         </div>
 
         <!-- SCREEN 2: DETAILS VIEW -->
@@ -502,7 +618,7 @@
       </div>
 
       <!-- FIXED BOTTOM NAVIGATION BAR -->
-      <nav class="relative z-40 w-full h-[68px] bg-white border-t border-slate-200/80 px-6 flex items-center justify-between shrink-0 select-none">
+      <nav class="market-bottom-nav relative z-40 w-full h-[68px] bg-white border-t border-slate-200/80 px-6 flex items-center justify-between shrink-0 select-none">
         
         <button onclick="navigateTo('home')" class="m-nav-tab flex flex-col items-center gap-1 text-brand-600 font-bold transition group" data-tab="home">
           <i data-lucide="compass" class="w-5 h-5 group-hover:scale-110 transition"></i>
@@ -574,37 +690,37 @@
     </div>
 
     <!-- PC SCREEN 1: HOME FEED -->
-    <div id="pc-screen-home" class="fade-enter">
+    <div id="pc-screen-home" class="market-pc-feed fade-enter">
       
       <!-- Top Grid: Hero Banner + Active Pass Quick Glance -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         
         <!-- Left: Hero Banner -->
-        <div class="lg:col-span-2 bg-gradient-to-br from-brand-900 to-brand-950 p-6 rounded-3xl text-white shadow-xl relative overflow-hidden flex flex-col justify-between border border-brand-800">
+        <div class="market-pc-hero lg:col-span-2 bg-gradient-to-br from-brand-900 to-brand-950 p-6 rounded-3xl text-white shadow-xl relative overflow-hidden flex flex-col justify-between border border-brand-800">
           <div class="absolute -right-10 -bottom-10 w-44 h-44 bg-brand-500/20 rounded-full blur-3xl"></div>
           
           <div>
-            <span class="text-xs font-extrabold tracking-widest text-brand-300 uppercase bg-brand-800/80 px-3 py-1 rounded-full border border-brand-700/50">CAMPUS FOOD RESCUE</span>
+            <span class="market-pc-eyebrow text-xs font-extrabold tracking-widest uppercase bg-brand-800/80 px-3 py-1 rounded-full border border-brand-700/50">BERKELEY MARKET • CAMPUS FOOD RESCUE</span>
             <h2 class="text-2xl sm:text-3xl font-extrabold text-white mt-3 leading-tight"><span id="pc-banner-count">3</span> Active Drops Nearby</h2>
             <p class="text-sm text-brand-200 mt-1 max-w-md">Good food. Less waste. Free catered portions ready for students across UC Berkeley.</p>
           </div>
 
           <div class="mt-6 flex flex-wrap items-center gap-3">
-            <button onclick="selectDrop('drop_1')" class="bg-brand-500 hover:bg-brand-400 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-lg shadow-brand-500/30 transition flex items-center gap-2">
+            <button onclick="selectDrop('drop_1')" class="market-pc-primary hover:brightness-95 font-bold text-xs px-4 py-2.5 rounded-xl shadow-lg transition flex items-center gap-2">
               <span>View Featured Drop</span>
               <i data-lucide="arrow-right" class="w-4 h-4"></i>
             </button>
-            <button onclick="openPostModal()" class="bg-white/10 hover:bg-white/20 text-white font-semibold text-xs px-4 py-2.5 rounded-xl backdrop-blur transition border border-white/10">
+            <button onclick="openPostModal()" class="market-pc-secondary hover:bg-white/80 font-semibold text-xs px-4 py-2.5 rounded-xl backdrop-blur transition border">
               Post Extra Food
             </button>
           </div>
         </div>
 
         <!-- Right: Active Reservation Card Preview -->
-        <div id="pc-active-pass-widget" class="bg-slate-800/90 border border-slate-700 p-5 rounded-3xl flex flex-col justify-between text-white shadow-lg">
+        <div id="pc-active-pass-widget" class="market-pc-pass bg-slate-800/90 border border-slate-700 p-5 rounded-3xl flex flex-col justify-between text-white shadow-lg">
           <div>
             <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-700/80">
-              <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">YOUR ACTIVE PASS</span>
+              <span class="market-pc-pass-heading text-[11px] font-extrabold uppercase tracking-wider text-slate-400">YOUR ACTIVE PASS</span>
               <span class="bg-brand-500/20 text-brand-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-brand-500/30">1 HOLD</span>
             </div>
 
@@ -636,13 +752,13 @@
       </div>
 
       <!-- Search & Category Filters -->
-      <div class="bg-slate-800/90 border border-slate-700 p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
+      <div class="market-pc-filter-bar bg-slate-800/90 border border-slate-700 p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
         <div class="flex items-center gap-2 overflow-x-auto no-scrollbar w-full sm:w-auto text-xs font-semibold">
-          <button onclick="handleFilter('All', this)" class="pc-filter-chip px-4 py-2 rounded-xl bg-white text-slate-900 shadow transition shrink-0">All Drops</button>
-          <button onclick="handleFilter('Vegan', this)" class="pc-filter-chip px-4 py-2 rounded-xl bg-slate-900/60 text-slate-300 border border-slate-700 hover:text-white transition shrink-0">Vegan</button>
-          <button onclick="handleFilter('Halal', this)" class="pc-filter-chip px-4 py-2 rounded-xl bg-slate-900/60 text-slate-300 border border-slate-700 hover:text-white transition shrink-0">Halal</button>
-          <button onclick="handleFilter('Hot Meals', this)" class="pc-filter-chip px-4 py-2 rounded-xl bg-slate-900/60 text-slate-300 border border-slate-700 hover:text-white transition shrink-0">Hot Meals</button>
-          <button onclick="handleFilter('Snacks', this)" class="pc-filter-chip px-4 py-2 rounded-xl bg-slate-900/60 text-slate-300 border border-slate-700 hover:text-white transition shrink-0">Snacks</button>
+          <button onclick="handleFilter('All', this)" class="pc-filter-chip market-filter-chip market-active px-4 py-2 rounded-xl shadow transition shrink-0">All Drops</button>
+          <button onclick="handleFilter('Vegan', this)" class="pc-filter-chip market-filter-chip px-4 py-2 rounded-xl border transition shrink-0">Vegan</button>
+          <button onclick="handleFilter('Halal', this)" class="pc-filter-chip market-filter-chip px-4 py-2 rounded-xl border transition shrink-0">Halal</button>
+          <button onclick="handleFilter('Hot Meals', this)" class="pc-filter-chip market-filter-chip px-4 py-2 rounded-xl border transition shrink-0">Hot Meals</button>
+          <button onclick="handleFilter('Snacks', this)" class="pc-filter-chip market-filter-chip px-4 py-2 rounded-xl border transition shrink-0">Snacks</button>
         </div>
 
         <div class="flex items-center gap-3 w-full sm:w-auto">
@@ -663,7 +779,7 @@
 
           <div class="relative w-full sm:w-64">
             <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-            <input type="text" placeholder="Search food, room or host..." oninput="handleSearch(this.value)" class="w-full bg-slate-900 text-xs pl-10 pr-4 py-2.5 rounded-xl border border-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500">
+            <input type="text" placeholder="Search food, room or host..." oninput="handleSearch(this.value)" class="market-pc-search w-full text-xs pl-10 pr-4 py-2.5 rounded-xl border focus:outline-none">
           </div>
         </div>
       </div>
@@ -671,11 +787,11 @@
       <!-- Drops Grid (Cards with Same Figma UI) -->
       <div>
         <div class="flex items-center justify-between mb-4">
-          <h3 id="pc-section-heading" class="text-base font-extrabold text-white">Available Food Drops Around Campus</h3>
+          <h3 id="pc-section-heading" class="market-pc-heading text-base font-extrabold text-white">Available Food Drops Around Campus</h3>
           <span class="text-xs text-slate-400">Real-time inventory</span>
         </div>
 
-        <div id="pc-drops-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+        <div id="pc-drops-grid" class="market-pc-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
       </div>
 
     </div>
@@ -1379,6 +1495,7 @@
         document.getElementById('m-banner-count').textContent = allDrops.length;
         document.getElementById('pc-banner-count').textContent = allDrops.length;
         document.getElementById('pc-saved-count-label').textContent = `Saved (${savedDropIds.length})`;
+        document.getElementById('m-market-count').textContent = `${displayed.length} campus finds · pickup nearby`;
       } catch (err) {
         console.error('Error fetching drops:', err);
       }
@@ -1504,13 +1621,13 @@
 
       if (drops.length === 0) {
         const emptyHtml = `
-          <div class="py-12 text-center w-full col-span-3">
-            <div class="w-12 h-12 mx-auto rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mb-2">
+          <div class="market-empty w-full col-span-3">
+            <div class="w-10 h-10 mx-auto rounded-full bg-[#edf0e3] text-[#68795c] flex items-center justify-center mb-2">
               <i data-lucide="inbox" class="w-6 h-6"></i>
             </div>
-            <h4 class="text-xs font-bold text-slate-700">${isShowingSavedOnly ? 'No saved drops' : 'No active drops found'}</h4>
-            <p class="text-[11px] text-slate-400 mt-0.5">${isShowingSavedOnly ? 'Tap the bookmark icon on any drop to save it here.' : 'Try changing your filters or campus zone.'}</p>
-            ${isShowingSavedOnly ? `<button onclick="toggleSavedFilter()" class="mt-3 px-3 py-1.5 bg-brand-500 text-white font-bold text-xs rounded-xl">Browse All Drops</button>` : ''}
+            <h4 class="market-empty-title">${isShowingSavedOnly ? 'No saved drops' : 'Nothing on this stall'}</h4>
+            <p class="market-empty-copy">${isShowingSavedOnly ? 'Save a meal you want to collect and it will appear here.' : 'Try another search or dietary filter.'}</p>
+            ${isShowingSavedOnly ? `<button onclick="toggleSavedFilter()">Browse all drops</button>` : ''}
           </div>
         `;
         mContainer.innerHTML = emptyHtml;
@@ -1519,88 +1636,76 @@
         return;
       }
 
-      // Render Mobile Drop Cards (Exact Figma UI)
+      // Render food-first market cards for mobile.
       mContainer.innerHTML = drops.map(drop => {
         const isSaved = savedDropIds.includes(drop.id);
         return `
-          <div onclick="selectDrop('${drop.id}')" class="bg-white p-3 rounded-2xl border border-slate-200/70 shadow-sm hover:shadow-md transition cursor-pointer active:scale-[0.99] flex gap-3.5 relative group">
-            <div class="w-24 h-24 rounded-xl overflow-hidden shrink-0 bg-slate-100 relative">
-              <img src="${drop.image_url}" alt="${drop.title}" class="w-full h-full object-cover">
-              <div class="absolute top-1 left-1 bg-black/60 backdrop-blur-sm text-[9px] font-bold text-white px-1.5 py-0.5 rounded">
-                FREE
+          <article onclick="selectDrop('${drop.id}')" class="market-drop-card group cursor-pointer active:scale-[0.99]">
+            <div class="market-drop-photo">
+              <img src="${drop.image_url}" alt="${drop.title}">
+              <div class="market-photo-shade"></div>
+              <span class="market-free-label">Free · rescued</span>
+              <button type="button" aria-label="${isSaved ? 'Remove saved drop' : 'Save drop'}" aria-pressed="${isSaved}" onclick="event.stopPropagation(); toggleBookmarkId('${drop.id}')" class="market-bookmark ${isSaved ? 'is-saved' : ''}">
+                <i data-lucide="bookmark" class="w-4 h-4 ${isSaved ? 'fill-current' : ''}"></i>
+              </button>
+              <span class="market-freshness"><i data-lucide="clock" class="w-3 h-3"></i>${drop.minutes_left} min fresh</span>
+              <span class="market-portions">${drop.remaining_portions} left</span>
+            </div>
+            <div class="market-drop-content">
+              <p class="market-drop-event">${drop.event_name}</p>
+              <h4 class="market-drop-title">${drop.title}</h4>
+              <p class="market-drop-location">
+                <i data-lucide="map-pin" class="w-3 h-3 shrink-0"></i>
+                <span>${drop.location_name}</span>
+                <span class="market-drop-distance">${drop.distance.replace(' away', '')}</span>
+              </p>
+              <div class="market-drop-footer">
+                <div class="market-drop-tags">${drop.tags.map(t => `<span class="market-drop-tag">${t}</span>`).join('')}</div>
+                <span class="market-portion-type">${drop.portion_type}</span>
               </div>
             </div>
-            <div class="flex-1 min-w-0 flex flex-col justify-between">
-              <div>
-                <div class="flex items-center justify-between">
-                  <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block truncate">${drop.event_name}</span>
-                  <button onclick="event.stopPropagation(); toggleBookmarkId('${drop.id}')" class="text-slate-400 hover:text-brand-600 transition p-0.5">
-                    <i data-lucide="bookmark" class="w-3.5 h-3.5 ${isSaved ? 'text-brand-600 fill-brand-600' : ''}"></i>
-                  </button>
-                </div>
-                <h4 class="text-sm font-bold text-slate-900 leading-snug truncate">${drop.title}</h4>
-                <div class="flex items-center gap-1 text-xs text-slate-500 mt-0.5">
-                  <i data-lucide="map-pin" class="w-3 h-3 text-slate-400"></i>
-                  <span class="truncate">${drop.location_name}</span>
-                </div>
-                <div class="flex items-center gap-1.5 mt-1.5">
-                  ${drop.tags.map(t => `<span class="text-[10px] font-medium bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">${t}</span>`).join('')}
-                </div>
-              </div>
-              <div class="flex items-center justify-between text-[11px] font-semibold mt-2 pt-1 border-t border-slate-100">
-                <span class="text-amber-600 flex items-center gap-1">
-                  <i data-lucide="clock" class="w-3 h-3"></i>
-                  <span>Expires in ${drop.minutes_left}m</span>
-                </span>
-                <span class="text-brand-600 font-bold">${drop.remaining_portions} ${drop.portion_type} left</span>
-              </div>
-            </div>
-          </div>
+          </article>
         `;
       }).join('');
 
-      // Render PC Desktop Grid Cards (Same Figma Styling)
+      // Render the matching food-market cards in the desktop grid.
       pcContainer.innerHTML = drops.map(drop => {
         const isSaved = savedDropIds.includes(drop.id);
         return `
-          <div onclick="selectDrop('${drop.id}')" class="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl transition cursor-pointer flex flex-col group">
-            <div class="relative w-full h-44 bg-slate-100 overflow-hidden">
-              <img src="${drop.image_url}" alt="${drop.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
-              <div class="absolute top-3 left-3 bg-brand-950/80 backdrop-blur text-white text-[10px] font-bold px-2.5 py-1 rounded-full border border-brand-800">
-                FREE FOOD
-              </div>
-              <button onclick="event.stopPropagation(); toggleBookmarkId('${drop.id}')" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur flex items-center justify-center text-slate-700 hover:text-brand-600 shadow transition">
-                <i data-lucide="bookmark" class="w-4 h-4 ${isSaved ? 'text-brand-600 fill-brand-600' : ''}"></i>
+          <article onclick="selectDrop('${drop.id}')" class="market-pc-card cursor-pointer group flex flex-col">
+            <div class="market-pc-card-photo">
+              <img src="${drop.image_url}" alt="${drop.title}">
+              <div class="market-photo-shade"></div>
+              <span class="market-free-label">Free · rescued</span>
+              <button type="button" aria-label="${isSaved ? 'Remove saved drop' : 'Save drop'}" aria-pressed="${isSaved}" onclick="event.stopPropagation(); toggleBookmarkId('${drop.id}')" class="market-bookmark ${isSaved ? 'is-saved' : ''}">
+                <i data-lucide="bookmark" class="w-4 h-4 ${isSaved ? 'fill-current' : ''}"></i>
               </button>
-              <div class="absolute bottom-3 right-3 bg-white/95 backdrop-blur text-slate-900 text-xs font-extrabold px-2.5 py-1 rounded-xl shadow">
-                ${drop.remaining_portions} ${drop.portion_type} left
-              </div>
+              <span class="market-portions">${drop.remaining_portions} ${drop.portion_type} left</span>
             </div>
-            <div class="p-5 flex-1 flex flex-col justify-between">
+            <div class="market-pc-card-content">
               <div>
-                <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block truncate">${drop.event_name}</span>
-                <h4 class="text-base font-extrabold text-slate-900 mt-1 leading-snug">${drop.title}</h4>
-                <p class="text-xs text-brand-700 font-semibold mt-1">Hosted by ${drop.host}</p>
-                <div class="flex items-center gap-1.5 text-xs text-slate-500 mt-2">
-                  <i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-400"></i>
-                  <span class="truncate">${drop.location_name} • ${drop.distance}</span>
-                </div>
-                <div class="flex flex-wrap gap-1.5 mt-3">
-                  ${drop.tags.map(t => `<span class="text-[10px] font-semibold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-lg">${t}</span>`).join('')}
-                </div>
+                <p class="market-drop-event">${drop.event_name}</p>
+                <h4 class="market-drop-title">${drop.title}</h4>
+                <p class="market-pc-host">Hosted by ${drop.host}</p>
+                <p class="market-drop-location">
+                  <i data-lucide="map-pin" class="w-3.5 h-3.5 shrink-0"></i>
+                  <span>${drop.location_name}</span>
+                  <span class="market-drop-distance">${drop.distance.replace(' away', '')}</span>
+                </p>
+                <div class="market-drop-tags mt-3">${drop.tags.map(t => `<span class="market-drop-tag">${t}</span>`).join('')}</div>
               </div>
-              <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                <span class="text-amber-600 font-semibold flex items-center gap-1">
+              <div class="market-pc-card-footer">
+                <span class="market-pc-expiry">
                   <i data-lucide="clock" class="w-3.5 h-3.5"></i>
-                  <span>Expires in ${drop.minutes_left}m</span>
+                  <span>${drop.minutes_left} min fresh</span>
                 </span>
-                <span class="text-brand-600 font-bold group-hover:translate-x-0.5 transition flex items-center gap-1">
-                  <span>View Details</span>
+                <span class="market-pc-details-link">
+                  <span>View details</span>
                   <i data-lucide="chevron-right" class="w-4 h-4"></i>
                 </span>
               </div>
             </div>
-          </div>
+          </article>
         `;
       }).join('');
 
@@ -1825,11 +1930,11 @@
       const pcHeading = document.getElementById('pc-section-heading');
       
       if (isShowingSavedOnly) {
-        mHeading.textContent = `Saved Drops (${savedDropIds.length})`;
+        mHeading.textContent = `Your market basket (${savedDropIds.length})`;
         pcHeading.textContent = `Your Saved Drops (${savedDropIds.length})`;
         showToast(`Showing ${savedDropIds.length} saved drops`);
       } else {
-        mHeading.textContent = 'Fresh around you';
+        mHeading.textContent = 'Good things, going fast';
         pcHeading.textContent = 'Available Food Drops Around Campus';
       }
       fetchDrops();
@@ -1907,7 +2012,9 @@
       currentFilter = tag;
       isShowingSavedOnly = false;
       document.querySelectorAll('.m-filter-chip, .pc-filter-chip').forEach(c => {
-        if (c.textContent.trim().toLowerCase().includes(tag.toLowerCase()) || (tag === 'All' && c.textContent.includes('All'))) {
+        const isActive = c.textContent.trim().toLowerCase().includes(tag.toLowerCase()) || (tag === 'All' && c.textContent.includes('All'));
+        c.classList.toggle('market-active', isActive);
+        if (isActive) {
           c.classList.add('bg-slate-900', 'text-white');
           c.classList.remove('bg-white', 'text-slate-600', 'bg-slate-900/60', 'text-slate-300');
         } else {
