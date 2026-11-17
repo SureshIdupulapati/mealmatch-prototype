@@ -6,3 +6,4 @@ yarn-error.log*
 *.tmp
 Screenshot from *.png
 /artifacts/mockup-sandbox/dist/
+/generated-artifacts/
