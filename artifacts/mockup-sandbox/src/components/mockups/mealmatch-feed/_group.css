@@ -1,0 +1,25 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;700&display=swap");
+
+.meal-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.meal-scroll {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@keyframes meal-feed-enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.meal-feed-enter {
+  animation: meal-feed-enter 200ms ease-out;
+}
